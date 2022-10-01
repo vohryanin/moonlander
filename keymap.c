@@ -6,7 +6,7 @@
 #include "keymap_spanish.h"
 #include "keymap_hungarian.h"
 #include "keymap_swedish.h"
-#include "keymap_br_abnt2.h"
+//#include "keymap_br_abnt2.h"
 #include "keymap_canadian_multilingual.h"
 #include "keymap_german_ch.h"
 #include "keymap_jp.h"
