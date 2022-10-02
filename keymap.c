@@ -9,7 +9,7 @@ enum custom_keycodes {
   #include "lang_shift/keycodes.h"
 };
 
-#define LANG_CHANGE_DEFAULT LANG_CHANGE_CAPS
+#define LANG_CHANGE_DEFAULT LANG_CHANGE_CTRL_SHIFT
 #include "lang_shift/code.c"
 
 #define MY_layout( \
