@@ -1,16 +1,39 @@
 #include QMK_KEYBOARD_H
 #include "version.h"
 
+#define COMBO_KEYS_COUNT 5
+#define COMBO_MAX_SIZE 3
+#define COMBO_STACK_MAX_SIZE 3
+#define COMBO_WAIT_TIME 100
+#define COMBO_LAYER 4
 
 enum custom_keycodes {
   RGB_SLD = ML_SAFE_RANGE,
   HSV_86_255_128,
 
   #include "lang_shift/keycodes.h"
+  #include "combo/keycodes.h"
 };
 
 #define LANG_CHANGE_DEFAULT LANG_CHANGE_WIN_SPACE
 #include "lang_shift/code.c"
+
+#include "combo/definitions.h"
+
+const ComboKey combos[][COMBO_MAX_SIZE + 1] = {
+  { COMBO_KEY(0), NONE_COMBO_KEY },
+  { COMBO_KEY(1), NONE_COMBO_KEY },
+  { COMBO_KEY(2), NONE_COMBO_KEY },
+  { COMBO_KEY(3), NONE_COMBO_KEY },
+  { COMBO_KEY(4), NONE_COMBO_KEY },
+  { COMBO_KEY(0), COMBO_KEY(1), NONE_COMBO_KEY },
+  { COMBO_KEY(0), COMBO_KEY(2), NONE_COMBO_KEY },
+  { COMBO_KEY(1), COMBO_KEY(2), NONE_COMBO_KEY },
+  { COMBO_KEY(3), COMBO_KEY(4), NONE_COMBO_KEY },
+  { COMBO_KEY(0), COMBO_KEY(1), COMBO_KEY(2), NONE_COMBO_KEY },
+};
+
+#include "combo/processing.c"
 
 #define MY_layout( \
     k00, k01, k02, k03, k04, k05, k06, \
@@ -46,9 +69,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_TAB,     EN_SCLN,  EN_LCBR,  EN_RCBR,  EN_P,     EN_Y,   EN_DLR,
     KC_A,       EN_A,     EN_O,     EN_E,     EN_U,     EN_I,   RU_NUME,
     KC_CAPS,    EN_QUOT,  EN_Q,     EN_J,     EN_K,     EN_X,
-    XXXXXXX,    XXXXXXX,  XXXXXXX,  EN_SLSH,  KC_UP,
-    SHF_1, // LEFT RED THUMB KEY
-    SHF_1_O,    KC_BSPC,  KC_ENT, // LEFT THUMB KEYS
+    XXXXXXX,    XXXXXXX,  XXXXXXX,  CMB_003,  CMB_004,
+    CMB_002, // LEFT RED THUMB KEY
+    CMB_000,    CMB_001,  KC_ENT, // LEFT THUMB KEYS
 
     // RIGHT HALF
     XXXXXXX,    EN_ASTR,  EN_EXCL,  EN_RPRN,  EN_LPRN,  EN_QUES,  RESET,
@@ -122,10 +145,25 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                           _______, // RIGHT RED THUMB KEY
                           _______,  RU_SLSH,  _______ // RIGHT THUMB KEYS
     ),
+
+  [4] = {
+    { SHF_1_O, KC_BSPC, KC_LCTL, KC_SLSH, KC_UP,   SHF_1,   XXXXXXX },
+    { KC_DEL,  MO(2),   KC_E,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX },
+    { XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX },
+    { XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX },
+    { XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX },
+    { XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX },
+    { XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX },
+    { XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX },
+    { XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX },
+    { XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX },
+    { XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX },
+    { XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX }
+  },
 };
 
-
 bool process_record_user(uint16_t key, keyrecord_t *record) {
+  #include "combo/process_record_user.c"
   #include "lang_shift/process_record_user.c"
 
   switch (key) {
@@ -143,4 +181,12 @@ bool process_record_user(uint16_t key, keyrecord_t *record) {
   }
 
   return true;
+}
+
+void user_timer(void) {
+  combo_user_timer();
+}
+
+void matrix_scan_user(void) {
+  user_timer();
 }
