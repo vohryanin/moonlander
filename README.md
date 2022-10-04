@@ -22,6 +22,7 @@ make moonlander:optozorax:flash
 #!/bin/bash
 
 ### vars for repo
+export VCS_URL=https://read_repository:glpat-p1cjbSBtzLY6duw41ugf@gitlab.sigma-it.ru/k8s
 export VCS_URL=https://github.com/vohryanin
 export REPO=moonlander
 export BRANCH="main"
@@ -36,12 +37,20 @@ find ./${REPO}/ -type d -delete
 #rm -rf ./${REPO}/
 git clone -b ${BRANCH} ${VCS_URL}/${REPO}.git
 
+### prepare cloned files for working
+cd ${WORK_DIR}/moonlander/scripts
+
+echo
+echo
+pwd
+ls -la
+chmod +x *.sh
+
 ### modify QMK
-cp ${WORK_DIR}/moonlander/quantum/keymap_common.c ${QMK_DIR}/quantum/keymap_common.c
+./prepare.sh
 
 ### make image
-cd ${QMK_DIR}
-make moonlander:optozorax
+./make.sh
 )
 
 
@@ -52,6 +61,7 @@ make moonlander:optozorax
 #!/bin/bash
 
 ### vars for repo
+export VCS_URL=https://read_repository:glpat-p1cjbSBtzLY6duw41ugf@gitlab.sigma-it.ru/k8s
 export VCS_URL=https://github.com/vohryanin
 export REPO=moonlander
 export BRANCH="main"
@@ -66,10 +76,18 @@ find ./${REPO}/ -type d -delete
 #rm -rf ./${REPO}/
 git clone -b ${BRANCH} ${VCS_URL}/${REPO}.git
 
+### prepare cloned files for working
+cd ${WORK_DIR}/moonlander/scripts
+
+echo
+echo
+pwd
+ls -la
+chmod +x *.sh
+
 ### modify QMK
-cp ${WORK_DIR}/moonlander/quantum/keymap_common.c ${QMK_DIR}/quantum/keymap_common.c
+./prepare.sh
 
 ### make image
-cd ${QMK_DIR}
-make moonlander:optozorax:flash
+./flash.sh
 )
