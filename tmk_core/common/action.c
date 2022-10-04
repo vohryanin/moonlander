@@ -781,6 +781,7 @@ void process_action(keyrecord_t *record, action_t action) {
  * FIXME: Needs documentation.
  */
 void register_code(uint8_t code) {
+    // uprintf("-----------   register: %d\n", code);
     if (code == KC_NO) {
         return;
     }
@@ -877,6 +878,7 @@ void register_code(uint8_t code) {
  * FIXME: Needs documentation.
  */
 void unregister_code(uint8_t code) {
+    // uprintf("-----------UN register: %d\n", code);
     if (code == KC_NO) {
         return;
     }
