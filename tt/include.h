@@ -4,12 +4,14 @@
   #error "You must specify variable CUSTOM_SAFE_RANGE for lang_shift extension."
 #endif
 
-#define TT_KEYS_COUNT 10
+#define TT_KEYS_COUNT 30
 
 enum tt_keycodes {
 	TT_START = CUSTOM_SAFE_RANGE,
 
 	#include "keycodes.h"
+
+	TT_UNDO,
 
 	TT_NEW_SAFE_RANGE,
 	#undef CUSTOM_SAFE_RANGE
@@ -28,20 +30,26 @@ uint8_t tt_get_pos(uint16_t key) {
 	return 255;
 }
 
+uint8_t to_undo_pos = 0;
 uint16_t tt_previous_key = 0;
 uint8_t tt_count = 0;
 bool tt_now_press = false;
 bool tt_process_record(uint16_t key, keyrecord_t *record) {
 	if (TT_000 <= key && key < TT_NEW_SAFE_RANGE) {
 		uint8_t pos = tt_get_pos(key);
+		if (key == TT_UNDO) {
+			pos = to_undo_pos;
+		}
 		if (pos != 255) {
-			if (key == tt_previous_key) {
-				if (record->event.pressed) {
+			to_undo_pos = pos;
+
+			if (!record->event.pressed && key != TT_UNDO) {
+				if (key == tt_previous_key) {
 					tt_count += 1;
+				} else {
+					tt_previous_key = key;
+					tt_count = 1;
 				}
-			} else {
-				tt_previous_key = key;
-				tt_count = 1;
 			}
 
 			tt_now_press = true;
