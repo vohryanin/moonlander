@@ -1,3 +1,57 @@
+#include "map.h"
+
+enum combo_keycodes {
+  COMBO_START = ML_SAFE_RANGE,
+
+  #include "keycodes.h"
+
+  COMBO_NEW_SAFE_RANGE,
+};
+
+#undef ML_SAFE_RANGE
+#define ML_SAFE_RANGE COMBO_NEW_SAFE_RANGE
+
+#define COMBO_WITH_SEP(x) COMBO_KEY(x - CMB_000), 
+#define CHORD(KEYCODE, ...) { .to_press = { MAP(COMBO_WITH_SEP, __VA_ARGS__) NONE_COMBO_KEY }, .keycode = KEYCODE }
+
+// Newtype pattern allows us wrap some type in that type and use static type-checking
+#define NEWTYPE(name, func_name, type, max, none_name) \
+  typedef struct name { \
+    type repr; \
+  } name; \
+  \
+  const name none_name = ((name){ .repr = max }); \
+  \
+  type get_ ## func_name(name a) { \
+    return a.repr; \
+  } \
+  \
+  bool eq_ ## func_name(name a, name b) { \
+    return get_ ## func_name(a) == get_ ## func_name(b); \
+  } \
+  \
+  bool neq_ ## func_name(name a, name b) { \
+    return get_ ## func_name(a) != get_ ## func_name(b); \
+  }
+
+NEWTYPE(ComboKey, combo_key, uint8_t, 255, NONE_COMBO_KEY)
+#define COMBO_KEY(x) ((ComboKey){ .repr = (x) })
+// ^ C is weak piece of shit: it can't do #define inside #define, or it can't do const function which we can use inside initialization. So we must write this by hand.
+
+#define NONE_COMBO_KEY ((ComboKey){ .repr = 255 })
+
+NEWTYPE(ComboPos, combo_pos, uint8_t, 255, NONE_COMBO_POS)
+#define COMBO_POS(x) ((ComboPos){ .repr = (x) })
+
+typedef struct ComboWithKeycode {
+  ComboKey to_press[COMBO_MAX_SIZE + 1];
+  uint16_t keycode;
+} ComboWithKeycode;
+
+const ComboWithKeycode combos[COMBO_COUNT];
+
+const uint8_t combos_size = COMBO_COUNT;
+
 typedef struct Combo {
   ComboKey array[COMBO_MAX_SIZE];
   uint8_t size;
@@ -5,7 +59,8 @@ typedef struct Combo {
   uint32_t last_modify_time;
 } Combo;
 
-#ifdef COMBO_DEBUG
+// Write 1, if you want to print debug messages when transition activates
+#if 0
   #define TRANSITION_DEBUG(a) uprintf("transition '" #a "' now it is #%d: {", combo - &combo_stack[0]); \
     for (int i = 0; i < combo->size; ++i) { \
       uprintf("%d, ", combo->array[i]); \
@@ -17,6 +72,7 @@ typedef struct Combo {
 
 Combo combo_stack[COMBO_STACK_MAX_SIZE] = {};
 uint8_t combo_stack_size = 0;
+
 bool combo_enabled = true;
 
 bool combo_is_combo_key(uint16_t key) {
@@ -97,19 +153,25 @@ uint16_t combo_get_keycode(ComboPos pos) {
 }
 
 void combo_press(ComboPos pos, bool down) {
-  #ifdef COMBO_DEBUG
-  uprintf("combo press pos: %d %s\n", pos, down ? "down" : "up");
-  #endif
+  keyrecord_t record = {
+    .event = {
+      .key = {
+        .col = 0,
+        .row = 0,
+        .use_custom_keycode = true,
+        .custom_keycode = combo_get_keycode(pos),
+      },
+      .pressed = down,
+      .time = timer_read(),
+    },
+  };
 
   combo_enabled = false;
-  press_arbitrary_keycode(combo_get_keycode(pos), down);
+  process_record(&record);
   combo_enabled = true;
 }
 
 void process_as_usual(keyrecord_t* record) {
-  #ifdef COMBO_DEBUG
-  uprintf("process as usual\n");
-  #endif
   combo_enabled = false;
   process_record(record);
   combo_enabled = true;
@@ -158,6 +220,7 @@ void combo_onenter_3(Combo *combo, ComboKey key) {
 
   if (combo->size == 0) {
     combo_onenter_end(combo);
+    TRANSITION_DEBUG(i);
   }
 }
 
@@ -177,7 +240,7 @@ bool combo_process_1(Combo *combo, uint16_t key, keyrecord_t *record) {
     } else {
       if (neq_combo_pos(pos, NONE_COMBO_POS)) {
         combo_press(pos, true);
-        combo->state = 2;
+        combo->state = 3;
         TRANSITION_DEBUG(k);
         return true;
       }
@@ -192,9 +255,6 @@ bool combo_process_1(Combo *combo, uint16_t key, keyrecord_t *record) {
 
         combo_onenter_3(combo, key_combo);
         TRANSITION_DEBUG(g);
-        if (combo->size == 0) {
-          TRANSITION_DEBUG(i);
-        }
         return false;  
       }
     } else {
@@ -208,9 +268,6 @@ bool combo_process_1(Combo *combo, uint16_t key, keyrecord_t *record) {
     if (up && neq_combo_key(key_combo, NONE_COMBO_KEY)) {
       combo_onenter_3(combo, key_combo);
       TRANSITION_DEBUG(f);
-      if (combo->size == 0) {
-        TRANSITION_DEBUG(i);
-      }
       return false;
     }
   }
@@ -230,9 +287,6 @@ bool combo_process_2(Combo *combo, uint16_t key, keyrecord_t *record) {
 
     combo_onenter_3(combo, key_combo);
     TRANSITION_DEBUG(c);
-    if (combo->size == 0) {
-      TRANSITION_DEBUG(i);
-    }
     return false;
   }
 
@@ -246,10 +300,8 @@ bool combo_process_3(Combo *combo, uint16_t key, keyrecord_t *record) {
 
   if (up && neq_combo_key(key_combo, NONE_COMBO_KEY) && combo_has_key(combo, key_combo)) {
     combo_onenter_3(combo, key_combo);
+
     TRANSITION_DEBUG(h);
-    if (combo->size == 0) {
-      TRANSITION_DEBUG(i);
-    }
     return false;
   }
 
@@ -265,18 +317,15 @@ bool combo_process_local_states(Combo *combo, uint16_t key, keyrecord_t *record)
   return true;
 }
 
-bool combo_process_record(uint16_t key, keyrecord_t *record) {
-  bool down = record->event.pressed;
-  ComboKey key_combo = combo_key_to_combo_key(key);
-  #ifdef COMBO_DEBUG
-  uprintf("%d pressed %s\n", key_combo, down ? "down" : "up");
-  #endif
-
+bool combo_process(uint16_t key, keyrecord_t *record) {
   for (uint8_t i = 0; i < combo_stack_size; ++i) {
     Combo *combo = &combo_stack[i];
     if (!combo_process_local_states(combo, key, record))
       return false;
   }
+
+  bool down = record->event.pressed;
+  ComboKey key_combo = combo_key_to_combo_key(key);
 
   if (down && neq_combo_key(key_combo, NONE_COMBO_KEY)) {
     Combo* combo = &combo_stack[combo_stack_size];
