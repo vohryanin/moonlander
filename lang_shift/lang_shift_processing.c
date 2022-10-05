@@ -1,31 +1,11 @@
-uint8_t shift_once_disable_stage = 2;
-uint8_t shift_once_layer_off = 0;
-uint8_t shift_once_layer_current = 0;
-
-void shift_use_to_next_key(uint8_t layer) {
-  uprintf("next key should be pressed with shift\n");
-  shift_activate_from_user(true);
-  layer_on(layer);
-  shift_once_disable_stage = 2;
-  shift_once_layer_off = layer;
-}
+void lang_press_key(Key key, bool down);
+void lang_tap_key(Key key);
 
 bool process_record_lang_shift(Key key, keyrecord_t* record) {
   bool down = record->event.pressed;
 
-  uprintf("process lang key\n");
-
   // Обрабатываем Once Shift
-  if (shift_once_disable_stage == 1) {
-    uprintf("layer disable state 1 -> 0\n");
-    shift_once_disable_stage = 0;
-    shift_activate_from_user(false);
-  }
-  if (down && key != SHF_1_O && key != SHF_3_O && shift_once_disable_stage == 2) {
-    uprintf("layer disable state 2 -> 1\n");
-    shift_once_disable_stage = 1;
-    layer_off(shift_once_layer_off);
-  }
+  shift_once_process(key, record);
 
   // Разбираемся, имеет ли эта клавиша какой-то язык, заданный в ней
   Key key1 = lang_process(key, down);
@@ -48,14 +28,22 @@ bool process_record_lang_shift(Key key, keyrecord_t* record) {
 
   // Обрабатываем клавиши, связанные с кастомным шифтом и кастомным переключением языка
   switch (key) {
+    case SHF_N_O:
+      shift_once_process_key(lang_get_shift_layer_number(), down);
+      return false;
     case SHF_1_O:
-      if (down) {
-        shift_use_to_next_key(1);
-      }
+      shift_once_process_key(1, down);
       return false;
     case SHF_3_O:
+      shift_once_process_key(3, down);
+      return false;
+    case SHF_N:
       if (down) {
-        shift_use_to_next_key(3);
+        shift_activate_from_user(true);
+        layer_on(lang_get_shift_layer_number());
+      } else {
+        shift_activate_from_user(false);
+        layer_off(lang_get_shift_layer_number());
       }
       return false;
     case SHF_1:
@@ -112,9 +100,90 @@ bool process_record_lang_shift(Key key, keyrecord_t* record) {
         lang_current_change = LANG_CHANGE_WIN_SPACE;
       }
       return false;
+    case AG_3DOT:
+      if (record->event.pressed) {
+        lang_tap_key(AG_DOT);
+        lang_tap_key(AG_DOT);
+        lang_tap_key(AG_DOT);
+      }    
+      return false;
+      break;
+    case AG_CMSP:
+      if (record->event.pressed) {
+        lang_tap_key(AG_COMM);
+        register_code(KC_SPC);
+        unregister_code(KC_SPC);
+      }
+      return false;
+      break;
+    case AG_SDOT:
+      if (record->event.pressed) {
+        lang_tap_key(AG_DOT);
+        register_code(KC_SPC);
+        unregister_code(KC_SPC);
+        shift_once_use_to_next_key(lang_get_shift_layer_number());
+      }
+      return false;
+      break;
   }
 
-  uprintf("not processing lang key =((\n");
+  static Lang lang_stack[3] = {};
+  static uint8_t modifiers_count = 0;
+  #define PROCESS(NAME, REGISTER, UNREGISTER) \
+    case NAME: { \
+      if (record->event.pressed) { \
+        lang_stack[modifiers_count] = lang_should_be; \
+        modifiers_count += 1; \
+        if (lang_should_be == 1) { \
+          layer_off(2); \
+        } \
+        lang_activate_from_user(0); \
+        REGISTER; \
+      } else { \
+        UNREGISTER; \
+        modifiers_count -= 1; \
+        lang_activate_from_user(lang_stack[modifiers_count]); \
+        if (lang_should_be == 1) { \
+          layer_on(2); \
+        } \
+      } \
+      return false; \
+    } break;
+
+  #define Rg(x) register_code(KC_L ## x)
+  #define Un(x) unregister_code(KC_L ## x)
+
+  switch (key) {
+    PROCESS(CTRL_0, Rg(CTRL), Un(CTRL));
+    PROCESS(ALT_0,  Rg(ALT),  Un(ALT));
+    PROCESS(WIN_0,  Rg(GUI),  Un(GUI));
+    PROCESS(CTAL_0, { Rg(CTRL);  Rg(ALT);   }, { Un(ALT);   Un(CTRL);  })
+    PROCESS(SHAL_0, { Rg(SHIFT); Rg(ALT);   }, { Un(ALT);   Un(SHIFT); })
+    PROCESS(CTSH_0, { Rg(CTRL);  Rg(SHIFT); }, { Un(SHIFT); Un(CTRL);  })
+    PROCESS(MCAS_0, { Rg(CTRL);  Rg(ALT); Rg(SHIFT); }, { Un(SHIFT); Un(ALT); Un(CTRL); })
+  }
 
   return true;
+}
+
+void lang_press_key(Key key, bool down) {
+  keyrecord_t record = {
+    .event = {
+      .key = {
+        .col = 0,
+        .row = 0,
+      },
+      .pressed = down,
+      .time = timer_read(),
+    },
+  };
+  
+  process_record_lang_shift(key, &record);
+}
+
+void lang_tap_key(Key key) {
+  lang_press_key(key, true);
+  lang_press_key(key, false);
+  shift_activate(shift_should_be);
+  lang_activate(lang_should_be);
 }
