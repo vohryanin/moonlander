@@ -25,7 +25,6 @@ enum custom_keycodes {
   RU_SDOT, // Space + Dot + AutoShift
 
   // English specific keys
-  EN_3DOT, // Three dots
   EN_CMSP, // Comma Space
   EN_SDOT, // Space + Dot + AutoShift
 
@@ -36,12 +35,6 @@ enum custom_keycodes {
   MY_SCRN,
 
   CT_SHF,
-
-  CT_A_C,
-  CT_A_V,
-  CT_A_X,
-
-  KC_SPHY, // Space + Hyphen + Space
 };
 
 #define MY_layout( \
@@ -73,7 +66,6 @@ LAYOUT_moonlander( \
 // Shift keys
 #define SH_F11 S(KC_F11)
 #define SH_PSCR S(KC_PSCR)
-#define SH_TAB S(KC_TAB)
 
 // Ctrl+Shift keys
 #define CS_TAB LCTL(S(KC_TAB))
@@ -152,49 +144,21 @@ LAYOUT_moonlander( \
 #define MS_DOWN KC_MS_DOWN
 #define MS_UP KC_MS_UP
 
-// Chords
-// Left Index
 #define CMB_CTC CMB_000
 #define CMB_CTV CMB_001
-// Left Thumb
 #define CMB_SHF CMB_002
 #define CMB_BSP CMB_003
 #define CMB_ENT CMB_004
 #define CMB_CTL CMB_005
-// Left Left Thumb
-#define CMB_LY4 CMB_006
-#define CMB_LY5 CMB_007
-// Right Thumb
-#define CMB_LAN CMB_008
-#define CMB_DOT CMB_009
-#define CMB_SPC CMB_010
-#define CMB_ALT CMB_011
-// Right Right Thumb
-#define CMB_COM CMB_012
-#define CMB_SLH CMB_013
-// Right Index
-#define CMB_CTS CMB_014
-#define CMB_TAB CMB_015
+#define CMB_R_S CMB_006
 
-// Russian keys
-// Left Index
-// No
-// Left Thumb
-#define CMS_SHF CMB_016
-// Left Left Thumb
-// No
-// Right Thumb
-#define CMS_DOT CMB_017
-#define CMS_SPC CMB_018
-// Right Right Thumb
-#define CMS_COM CMB_019
-#define CMS_SLH CMB_020
-// Right Index
-// No
-
-// Shifted index keys
-#define CMB_CAC CMB_021
-#define CMB_CAV CMB_022
+#define CMB_K_CTC 0
+#define CMB_K_CTV 1
+#define CMB_K_SHF 2
+#define CMB_K_BSP 3
+#define CMB_K_ENT 4
+#define CMB_K_CTL 5
+#define CMB_K_R_S 6
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     //---------------------------------------------------------------------------
@@ -204,68 +168,68 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_TAB,  EN_SCLN, EN_LCBR, EN_RCBR, EN_P,    EN_Y,    CMB_CTC,
     MO(4),   EN_A,    EN_O,    EN_E,    EN_U,    EN_I,    CMB_CTV,
     MO(5),   EN_QUOT, EN_Q,    EN_J,    EN_K,    EN_X,
-    CT_J,    XXXXXXX, CT_SLSH, CMB_LY5, CMB_LY4,
+    TG(4),   TG(5),   CT_SLSH, KC_SLSH, MO(7),
     CMB_CTL, // LEFT RED THUMB KEY
     CMB_SHF, CMB_BSP, CMB_ENT, // LEFT THUMB KEYS
 
     // RIGHT HALF
     CT_D,    EN_ASTR, EN_EXCL, EN_RPRN, EN_LPRN, EN_QUES, CT_Z,
-    CMB_CTS, EN_F,    EN_G,    EN_C,    EN_R,    EN_L,    EN_BSLS,
-    CMB_TAB, EN_D,    EN_H,    EN_T,    EN_N,    EN_S,    EN_MINS,
+    CT_S,    EN_F,    EN_G,    EN_C,    EN_R,    EN_L,    EN_BSLS,
+    CT_BSPC, EN_D,    EN_H,    EN_T,    EN_N,    EN_S,    EN_MINS,
              EN_B,    EN_M,    EN_W,    EN_V,    EN_Z,    EN_HASH,
-                      CMB_COM, CMB_SLH, KG_NEXT, TG(6),   CT_J,
-                      CMB_ALT, // RIGHT RED THUMB KEY
-                      CMB_LAN, CMB_DOT, CMB_SPC // RIGHT THUMB KEYS
+                      EN_CMSP, KG_NEXT, XXXXXXX, TG(6),   CT_J,
+                      KC_LALT, // RIGHT RED THUMB KEY
+                      LA_CHNG, EN_DOT,  KC_SPC // RIGHT THUMB KEYS
   ),
 
   //---------------------------------------------------------------------------
   [1] = MY_layout(
     // LEFT HALF
-    _______, EN_7,    EN_5,    EN_3,    EN_1,    EN_9,    EN_DLR,
-    _______, EN_COLN, EN_LT,   EN_GT,   EN_S_P,  EN_S_Y,  CMB_CAC,
-    _______, EN_S_A,  EN_S_O,  EN_S_E,  EN_S_U,  EN_S_I,  CMB_CAV,
+    _______, EN_7,    EN_5,    EN_3,    EN_1,    EN_9,    _______,
+    _______, EN_COLN, EN_LT,   EN_GT,   EN_S_P,  EN_S_Y,  EN_DLR,
+    _______, EN_S_A,  EN_S_O,  EN_S_E,  EN_S_U,  EN_S_I,  EN_TILD,
     _______, EN_DQUO, EN_S_Q,  EN_S_J,  EN_S_K,  EN_S_X, 
     _______, _______, _______, _______, _______,
     _______, // LEFT RED THUMB KEY
     _______, _______, _______, // LEFT THUMB KEYS
 
     // RIGHT HALF
-    EN_TILD, EN_0,    EN_2,    EN_4,    EN_6,    EN_8,    EN_PERC,
+    _______, EN_0,    EN_2,    EN_4,    EN_6,    EN_8,    EN_PERC,
     _______, EN_S_F,  EN_S_G,  EN_S_C,  EN_S_R,  EN_S_L,  EN_PIPE,
     _______, EN_S_D,  EN_S_H,  EN_S_T,  EN_S_N,  EN_S_S,  EN_AT,
              EN_S_B,  EN_S_M,  EN_S_W,  EN_S_V,  EN_S_Z,  EN_CIRC,
                       EN_COMM, _______, _______, _______, _______,
                       _______, // RIGHT RED THUMB KEY
-                      _______, _______, _______ // RIGHT THUMB KEYS
+                      _______, EN_UNDS, _______ // RIGHT THUMB KEYS
   ),
 
   //---------------------------------------------------------------------------
   [2] = MY_layout(
     // LEFT HALF
     _______, RU_PLUS, RU_MINS, RU_SCLN, RU_DQUO, RU_COLN, _______,
-    _______, RU_J,    RU_TS,   RU_U,    RU_JE,   RU_F,    CMB_CTC,
-    _______, RU_K,    RU_M,    RU_V,    RU_A,    RU_P,    CMB_CTV,
+    _______, RU_J,    RU_TS,   RU_U,    RU_JE,   RU_F,    _______,
+    _______, RU_K,    RU_M,    RU_V,    RU_A,    RU_P,    _______,
     _______, RU_JA,   RU_CH,   RU_S,    RU_I,    RU_Y,
     _______, _______, _______, _______, _______,
     _______, // LEFT RED THUMB KEY
-    CMS_SHF, _______, _______, // LEFT THUMB KEYS
+    CMB_R_S, _______, _______, // LEFT THUMB KEYS
 
     // RIGHT HALF
     _______, RU_ASTR, RU_EXCL, RU_RPRN, RU_LPRN, RU_QUES, CT_Z,
     _______, RU_SC,   RU_G,    RU_T,    RU_N,    RU_Z,    RU_HD,
     _______, RU_R,    RU_O,    RU_L,    RU_D,    RU_ZH,   RU_E,
              RU_SH,   RU_SF,   RU_B,    RU_JU,   RU_H,    RU_JO,
-                      CMS_COM, CMS_SLH, _______, _______, _______,
+                      RU_CMSP, XXXXXXX, _______, _______, _______,
                       _______, // RIGHT RED THUMB KEY
-                      _______, CMS_DOT, CMS_SPC // RIGHT THUMB KEYS
+                      _______, RU_SDOT, _______ // RIGHT THUMB KEYS
   ),
 
   //---------------------------------------------------------------------------
   [3] = MY_layout(
     // LEFT HALF
     _______, RU_7,    RU_5,    RU_3,    RU_1,    RU_9,    _______,
-    _______, RU_S_J,  RU_S_TS, RU_S_U,  RU_S_JE, RU_S_F,  CMB_CAC,
-    _______, RU_S_K,  RU_S_M,  RU_S_V,  RU_S_A,  RU_S_P,  CMB_CAV,
+    _______, RU_S_J,  RU_S_TS, RU_S_U,  RU_S_JE, RU_S_F,  RU_NUME,
+    _______, RU_S_K,  RU_S_M,  RU_S_V,  RU_S_A,  RU_S_P,  RU_EQL,
     _______, RU_S_JA, RU_S_CH, RU_S_S,  RU_S_I,  RU_S_Y,
     _______, _______, _______, _______, _______,
     _______, // LEFT RED THUMB KEY
@@ -278,7 +242,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
              RU_S_SH, RU_S_SF, RU_S_B,  RU_S_JU, RU_S_H,  RU_S_JO,
                       RU_COMM, _______, _______, _______, _______,
                       _______, // RIGHT RED THUMB KEY
-                      _______,  _______,  _______ // RIGHT THUMB KEYS
+                      _______,  RU_DOT,  _______ // RIGHT THUMB KEYS
     ),
 
   //---------------------------------------------------------------------------
@@ -309,7 +273,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_F5,   KC_F6,   CS_T,    CT_T,    CT_W,     CT_J,     CT_C,
     KC_BTN2, KC_BTN1, KC_BTN3, CS_TAB,  CT_TAB,   CT_D,     CT_V,
     _______, CT_S,    KC_ENT,  KC_UP,   KC_DOWN,  CT_F,
-    XXXXXXX, _______, CLR_1,   CLR_2,   CLR_3,  
+    MY_SCRN, _______, CLR_1,   CLR_2,   CLR_3,  
     RGB_MOD, // LEFT RED THUMB KEY
     RGB_VAD, RGB_VAI, RGB_LYR, // LEFT THUMB KEYS
 
@@ -364,100 +328,40 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                           _______, // RIGHT RED THUMB KEY
                           _______,  _______,  _______ // RIGHT THUMB KEYS
   ),
+
+  [8] = {
+    { CT_C,    CT_V,    CT_A,    SHF_1,   KC_BSPC, KC_ENT,  KC_LCTL },
+    { CT_X,    SHF_1_O, KC_DEL,  CT_BSPC, CT_SHF,  SHF_3,   CT_X },
+    { SHF_3_O, CT_SHF,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX },
+    { XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX },
+    { XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX },
+    { XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX },
+    { XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX },
+    { XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX },
+    { XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX },
+    { XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX },
+    { XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX },
+    { XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX }
+  },
 };
 
-const ComboWithKeycode combos[COMBO_COUNT] = {
-  // Left Index
-  CHORD(CT_C,    /* <- */ CMB_CTC),
-  CHORD(CT_V,    /* <- */ CMB_CTV),
-  CHORD(CT_X,    /* <- */ CMB_CTC, CMB_CTV),
-
-  // Left Index + Thumb
-  CHORD(CT_A_C,  /* <- */ CMB_SHF, CMB_CTC),
-  CHORD(CT_A_V,  /* <- */ CMB_SHF, CMB_CTV),
-  CHORD(CT_A_X,  /* <- */ CMB_SHF, CMB_CTC, CMB_CTV),
-
-  // Left Thumb
-  CHORD(SHF_1,   /* <- */ CMB_SHF),
-  CHORD(KC_BSPC, /* <- */ CMB_BSP),
-  CHORD(KC_ENT,  /* <- */ CMB_ENT),
-  CHORD(KC_LCTL, /* <- */ CMB_CTL),
-  CHORD(CT_A,    /* <- */ CMB_SHF, CMB_CTL),
-  CHORD(SHF_1_O, /* <- */ CMB_SHF, CMB_BSP),
-  CHORD(KC_DEL,  /* <- */ CMB_BSP, CMB_CTL),
-  CHORD(CT_BSPC, /* <- */ CMB_BSP, CMB_ENT),
-  CHORD(CT_SHF,  /* <- */ CMB_SHF, CMB_BSP, CMB_CTL),
-  CHORD(MY_SCRN, /* <- */ CMB_BSP, CMB_ENT, CMB_CTL),
-
-  // Left Left Thumb
-  CHORD(MO(4),   /* <- */ CMB_LY4),
-  CHORD(MO(5),   /* <- */ CMB_LY5),
-  CHORD(MO(6),   /* <- */ CMB_LY4, CMB_LY5),
-
-  // Right Thumb
-  CHORD(LA_CHNG, /* <- */ CMB_LAN),
-  CHORD(EN_DOT,  /* <- */ CMB_DOT),
-  CHORD(KC_SPC,  /* <- */ CMB_SPC),
-  CHORD(KC_LALT, /* <- */ CMB_ALT),
-  CHORD(EN_SDOT, /* <- */ CMB_DOT, CMB_SPC),
-  CHORD(LA_SYNC, /* <- */ CMB_LAN, CMB_DOT),
-  CHORD(EN_UNDS, /* <- */ CMB_SPC, CMB_ALT),
-  CHORD(EN_MINS, /* <- */ CMB_DOT, CMB_ALT),
-  CHORD(KC_LGUI, /* <- */ CMB_SPC, CMB_DOT, CMB_ALT),
-  CHORD(XXXXXXX, /* <- */ CMB_LAN, CMB_DOT, CMB_ALT),
-
-  // Right Right Thumb
-  CHORD(EN_CMSP, /* <- */ CMB_COM),
-  CHORD(EN_SLSH, /* <- */ CMB_SLH),
-  CHORD(XXXXXXX, /* <- */ CMB_COM, CMB_SLH),
-
-  // Right Index
-  CHORD(CT_S,    /* <- */ CMB_CTS),
-  CHORD(XXXXXXX, /* <- */ CMB_TAB),
-  CHORD(KC_SPHY, /* <- */ CMB_CTS, CMB_TAB),
-
-  // Right Thumb + Left Thumb
-  CHORD(EN_COMM, /* <- */ CMB_SHF, CMB_COM), // Костыль, потому что шифт является одновременно слоём, и одновременно они с запятой аккорды, поэтому нужно такая вещь для дополнительной подстраховки, ибо что-то там не работает...
-
-  // -------------------------------------------------------------------------
-  // Shifted index keys
-
-  // Left Index
-  CHORD(CT_A_C,  /* <- */ CMB_CAC),
-  CHORD(CT_A_V,  /* <- */ CMB_CAV),
-  CHORD(CT_A_X,  /* <- */ CMB_CAC, CMB_CAV),
-
-  // -------------------------------------------------------------------------
-  // Duplicate of chords for russian layer
-
-  // Left Index + Thumb
-  CHORD(CT_A_C,  /* <- */ CMS_SHF, CMB_CTC),
-  CHORD(CT_A_V,  /* <- */ CMS_SHF, CMB_CTV),
-  CHORD(CT_A_X,  /* <- */ CMS_SHF, CMB_CTC, CMB_CTV),
-
-  // Left Thumb
-  CHORD(SHF_3,   /* <- */ CMS_SHF),
-  CHORD(CT_A,    /* <- */ CMS_SHF, CMB_CTL),
-  CHORD(SHF_3_O, /* <- */ CMS_SHF, CMB_BSP),
-  CHORD(CT_SHF,  /* <- */ CMS_SHF, CMB_BSP, CMB_CTL),
-
-  // Right Thumb
-  CHORD(RU_DOT,  /* <- */ CMS_DOT),
-  CHORD(KC_SPC,  /* <- */ CMS_SPC),
-  CHORD(RU_SDOT, /* <- */ CMS_DOT, CMS_SPC),
-  CHORD(LA_SYNC, /* <- */ CMB_LAN, CMS_DOT),
-  CHORD(RU_UNDS, /* <- */ CMS_SPC, CMB_ALT),
-  CHORD(RU_MINS, /* <- */ CMS_DOT, CMB_ALT),
-  CHORD(KC_LGUI, /* <- */ CMS_SPC, CMS_DOT, CMB_ALT),
-  CHORD(XXXXXXX, /* <- */ CMB_LAN, CMS_DOT, CMB_ALT),
-
-  // Right Right Thumb
-  CHORD(RU_CMSP, /* <- */ CMS_COM),
-  CHORD(RU_SLSH, /* <- */ CMS_SLH),
-  CHORD(XXXXXXX, /* <- */ CMS_COM, CMS_SLH),
-
-  // Right Thumb + Left Thumb
-  CHORD(RU_COMM, /* <- */ CMS_SHF, CMS_COM),
+const ComboKey combos[COMBO_COUNT][COMBO_MAX_SIZE + 1] = {
+  CHORD(CMB_K_CTC),
+  CHORD(CMB_K_CTV),
+  CHORD(CMB_K_CTC, CMB_K_CTV),
+  CHORD(CMB_K_SHF),
+  CHORD(CMB_K_BSP),
+  CHORD(CMB_K_ENT),
+  CHORD(CMB_K_CTL),
+  CHORD(CMB_K_SHF, CMB_K_CTL),
+  CHORD(CMB_K_SHF, CMB_K_BSP),
+  CHORD(CMB_K_BSP, CMB_K_CTL),
+  CHORD(CMB_K_BSP, CMB_K_ENT),
+  CHORD(CMB_K_SHF, CMB_K_BSP, CMB_K_CTL),
+  CHORD(CMB_K_R_S),
+  CHORD(CMB_K_R_S, CMB_K_CTL),
+  CHORD(CMB_K_R_S, CMB_K_BSP),
+  CHORD(CMB_K_R_S, CMB_K_BSP, CMB_K_CTL),
 };
 
 // Модификаторы, которые одновременно переключают слой на 0
@@ -496,21 +400,31 @@ bool process_my_modifiers(uint16_t keycode, keyrecord_t *record) {
 }
 */
 
-// Мои языко-символьные клавиши
+// Мои языко-зависимые клавиши
 bool process_my_lang_keys(uint16_t keycode, keyrecord_t *record) {
+  #define LANG_PRESS(key) \
+    old = record->event.pressed; \
+    record->event.pressed = true; \
+    process_record_lang_shift(key, record); \
+    record->event.pressed = false; \
+    process_record_lang_shift(key, record); \
+    record->event.pressed = old;
+
+  bool old;
+
   // Russian-specific codes
   switch (keycode) {
     case RU_3DOT:
       if (record->event.pressed) {
-        lang_tap_key(RU_DOT);
-        lang_tap_key(RU_DOT);
-        lang_tap_key(RU_DOT);
+        LANG_PRESS(RU_DOT);
+        LANG_PRESS(RU_DOT);
+        LANG_PRESS(RU_DOT);
       }    
       return false;
       break;
     case RU_CMSP:
       if (record->event.pressed) {
-        lang_tap_key(RU_COMM);
+        LANG_PRESS(RU_COMM);
         register_code(KC_SPC);
         unregister_code(KC_SPC);
       }
@@ -518,10 +432,10 @@ bool process_my_lang_keys(uint16_t keycode, keyrecord_t *record) {
       break;
     case RU_SDOT:
       if (record->event.pressed) {
-        lang_tap_key(RU_DOT);
+        LANG_PRESS(RU_DOT);
         register_code(KC_SPC);
         unregister_code(KC_SPC);
-        shift_once_use_to_next_key(3);
+        process_record_lang_shift(SHF_3_O, record);
       }
       return false;
       break;
@@ -529,17 +443,9 @@ bool process_my_lang_keys(uint16_t keycode, keyrecord_t *record) {
 
   // English-specific codes
   switch (keycode) {
-    case EN_3DOT:
-      if (record->event.pressed) {
-        lang_tap_key(EN_DOT);
-        lang_tap_key(EN_DOT);
-        lang_tap_key(EN_DOT);
-      }    
-      return false;
-      break;
     case EN_CMSP:
       if (record->event.pressed) {
-        lang_tap_key(EN_COMM);
+        LANG_PRESS(EN_COMM);
         register_code(KC_SPC);
         unregister_code(KC_SPC);
       }
@@ -547,10 +453,10 @@ bool process_my_lang_keys(uint16_t keycode, keyrecord_t *record) {
       break;
     case EN_SDOT:
       if (record->event.pressed) {
-        lang_tap_key(EN_DOT);
+        LANG_PRESS(EN_DOT);
         register_code(KC_SPC);
         unregister_code(KC_SPC);
-        shift_once_use_to_next_key(1);
+        shift_use_to_next_key(1);
       }
       return false;
       break;
@@ -558,65 +464,21 @@ bool process_my_lang_keys(uint16_t keycode, keyrecord_t *record) {
   return true;
 }
 
-extern bool g_suspend_state;
-extern rgb_config_t rgb_matrix_config;
-
-void keyboard_post_init_user(void) {
-  rgb_matrix_enable();
-}
-
-#define COLOR_ANY_FINGER { 120, 255, 255 }
-#define COLOR_PINKY { 33, 255, 255 }
-#define COLOR_ANNULAR { 146, 255, 255 }
-#define COLOR_MIDDLE { 85, 255, 255 }
-#define COLOR_INDEX { 224, 255, 255 }
-#define COLOR_THUMB { 23, 255, 255 }
-
-const uint8_t PROGMEM ledmap[][DRIVER_LED_TOTAL][3] = {
-    [0] = { COLOR_ANY_FINGER, COLOR_PINKY, COLOR_PINKY, COLOR_PINKY, COLOR_ANY_FINGER, COLOR_PINKY, COLOR_PINKY, COLOR_PINKY, COLOR_PINKY, COLOR_ANY_FINGER, COLOR_ANNULAR, COLOR_ANNULAR, COLOR_ANNULAR, COLOR_ANNULAR, COLOR_ANY_FINGER, COLOR_MIDDLE, COLOR_MIDDLE, COLOR_MIDDLE, COLOR_MIDDLE, COLOR_THUMB, COLOR_INDEX, COLOR_INDEX, COLOR_INDEX, COLOR_INDEX, COLOR_THUMB, COLOR_INDEX, COLOR_INDEX, COLOR_INDEX, COLOR_INDEX, COLOR_INDEX, COLOR_INDEX, COLOR_INDEX, COLOR_THUMB, COLOR_THUMB, COLOR_THUMB, COLOR_THUMB, COLOR_ANY_FINGER, COLOR_PINKY, COLOR_PINKY, COLOR_PINKY, COLOR_ANY_FINGER, COLOR_PINKY, COLOR_PINKY, COLOR_PINKY, COLOR_PINKY, COLOR_ANY_FINGER, COLOR_ANNULAR, COLOR_ANNULAR, COLOR_ANNULAR, COLOR_ANNULAR, COLOR_ANY_FINGER, COLOR_MIDDLE, COLOR_MIDDLE, COLOR_MIDDLE, COLOR_MIDDLE, COLOR_THUMB, COLOR_INDEX, COLOR_INDEX, COLOR_INDEX, COLOR_INDEX, COLOR_THUMB, COLOR_INDEX, COLOR_INDEX, COLOR_INDEX, COLOR_INDEX, COLOR_INDEX, COLOR_INDEX, COLOR_INDEX, COLOR_THUMB, COLOR_THUMB, COLOR_THUMB, COLOR_THUMB },
-};
-
-void set_layer_color(int layer) {
-  for (int i = 0; i < DRIVER_LED_TOTAL; i++) {
-    HSV hsv = {
-      .h = pgm_read_byte(&ledmap[layer][i][0]),
-      .s = pgm_read_byte(&ledmap[layer][i][1]),
-      .v = pgm_read_byte(&ledmap[layer][i][2]),
-    };
-    if (!hsv.h && !hsv.s && !hsv.v) {
-        //rgb_matrix_set_color( i, 0, 0, 0 );
-    } else {
-        RGB rgb = hsv_to_rgb( hsv );
-        float f = (float)rgb_matrix_config.hsv.v / UINT8_MAX;
-        rgb_matrix_set_color( i, f * rgb.r, f * rgb.g, f * rgb.b );
-    }
-  }
-}
-
-uint8_t draw_layer = 0;
-void rgb_matrix_indicators_user(void) {
-  if (g_suspend_state || keyboard_config.disable_layer_led) { return; }
-  switch (draw_layer) {
-    case 1:
-      set_layer_color(0);
-      break;
-   default:
-    if (rgb_matrix_get_flags() == LED_FLAG_NONE)
-      rgb_matrix_set_color_all(0, 0, 0);
-    break;
-  }
-}
-
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+  uprintf("\n\n\n");
+
   if (combo_enabled && !combo_process(keycode, record)) {
+    uprintf("this is combo key\n");
     return false;
   }
 
   if (!process_my_lang_keys(keycode, record)) {
+    uprintf("this is my lang key\n");
     return false;
   }
 
   if (!process_record_lang_shift(keycode, record)) {
+    uprintf("this is lang shift key\n");
     return false;
   }
 
@@ -632,11 +494,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       return false;
     case CLR_1:
       if (record->event.pressed) {
-        if (draw_layer == 1) {
-          draw_layer = 0;
-        } else {
-          draw_layer = 1;
-        }
+        rgblight_mode(1);
+        rgblight_sethsv(0,255,255);
       }
       return false;
     case CLR_2:
@@ -680,6 +539,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
       return false;
       break;
+    case KC_ENT:
+      if (!record->event.pressed) {
+        uprintf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+      }
+      return true;
     case CT_SHF:
       if (record->event.pressed) {
         register_code(KC_LCTRL);
@@ -716,57 +580,15 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
       return false;
       break;
-    case CT_A_C:
-      if (record->event.pressed) {
-        register_code(KC_LCTRL);
-        register_code(KC_A);
-        unregister_code(KC_A);
-        register_code(KC_C);
-        unregister_code(KC_C);
-        unregister_code(KC_LCTRL);
-      }
-      return true;
-    case CT_A_V:
-      if (record->event.pressed) {
-        register_code(KC_LCTRL);
-        register_code(KC_A);
-        unregister_code(KC_A);
-        register_code(KC_V);
-        unregister_code(KC_V);
-        unregister_code(KC_LCTRL);
-      }
-      return true;
-    case CT_A_X:
-      if (record->event.pressed) {
-        register_code(KC_LCTRL);
-        register_code(KC_A);
-        unregister_code(KC_A);
-        register_code(KC_X);
-        unregister_code(KC_X);
-        unregister_code(KC_LCTRL);
-      }
-      return true;
-    case KC_SPHY:
-      if (record->event.pressed) {
-        register_code(KC_SPC);
-        unregister_code(KC_SPC);
-        register_code(KC_MINS);
-        unregister_code(KC_MINS);
-        register_code(KC_SPC);
-        unregister_code(KC_SPC);
-      }
-      return false;
-      break;
   }
+
+  uprint("IDK what is this\n");
 
   return true;
 }
 
 void user_timer(void) {
   combo_user_timer();
-  shift_user_timer();
-  shift_once_user_timer();
-  lang_user_timer();
 }
 
 void matrix_scan_user(void) {
