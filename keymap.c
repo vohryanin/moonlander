@@ -207,7 +207,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     // RIGHT HALF
     CT_D,    RU_ASTR, RU_EXCL, RU_QUES, EN_HASH, RU_SLSH, CT_Z,
-    CMB_CTS, RU_N,    RU_G,    CMS_SH,  RU_SC,   RU_Z,    RU_MINS,
+    CMB_CTS, RU_N,    RU_G,    RU_SH,  RU_SC,   RU_Z,    RU_MINS,
     CMB_CMS, CMS_R,   RU_O,    RU_L,    RU_D,    RU_ZH,   RU_E,
              CMS_T,   RU_SF,   RU_B,    RU_JU,   RU_H,    RU_JO,
                       CMB_LYR, CMB_SLH, _______, _______, _______,
