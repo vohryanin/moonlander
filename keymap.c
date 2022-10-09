@@ -139,9 +139,9 @@ LAYOUT_moonlander( \
 
 // Russian index keys on letters
 #define CMS_R CMB_020
-#define CMS_SH CMB_021
+#define CMS_T CMB_021
 #define CMS_S_R CMB_022
-#define CMS_SSH CMB_023
+#define CMS_S_T CMB_023
 
 // Подключаем обработку кастомных кейкодов
 #include "custom_lang.h"
@@ -152,21 +152,22 @@ LAYOUT_moonlander( \
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   //---------------------------------------------------------------------------
+  // TODO надо разобраться, куда поместить AC_CIRC, AC_GRV, AC_ACT, сделать их независящими от текущей раскладки
   [0] = MY_layout(
     // LEFT HALF
     KC_ESC,  EN_PLUS, EN_SCLN, EN_GRV,  EN_COLN, EN_EQL,  EN_AT,
-    EN_UNDS, AC_GRV,  EN_X,    EN_Y,    EN_P,    EN_S_I,  CMB_CTC,
-    EN_DQUO, EN_A,    EN_O,    EN_E,    EN_U,    EN_I,    CMB_CTV,
-    EN_QUOT, AC_ACT,  EN_Q,    EN_J,    EN_K,    AC_CIRC,
+    EN_UNDS, EN_Q,  EN_W,    EN_E,    EN_R,    EN_T,  CMB_CTC,
+    EN_DQUO, EN_A,  EN_S,    EN_D,    EN_F,    EN_G,  CMB_CTV,
+    EN_QUOT, EN_Z,  EN_X,    EN_C,    EN_V,    EN_B,
     MU_CTJ,  TT_008,  CT_SLSH, CMB_LYG, CMB_LYV,
     CMB_CTL, // LEFT RED THUMB KEY
     CMB_SFT, CMB_BSP, CMB_ENT, // LEFT THUMB KEYS
 
     // RIGHT HALF
     CT_D,    EN_ASTR, EN_EXCL, EN_QUES, EN_HASH, EN_SLSH, CT_Z,
-    CMB_CTS, EN_F,    EN_G,    EN_C,    EN_R,    EN_L,    EN_MINS,
-    CMB_CMS, EN_D,    EN_H,    EN_T,    EN_N,    EN_S,    XXXXXXX,
-             EN_B,    EN_M,    EN_W,    EN_V,    EN_Z,    AC_TILD,
+    CMB_CTS, EN_Y,    EN_U,    EN_I,    EN_O,    EN_P,    EN_MINS,
+    CMB_CMS, EN_H,    EN_J,    EN_K,    EN_L,    EN_SCLN, EN_QUOT,
+             EN_N,    EN_M,    EN_COMM, EN_DOT,  EN_SLSH, AC_TILD,
                       CMB_LYR, CMB_SLH, KG_NEXT, TT_006,  TT_009,
                       CMB_ALT, // RIGHT RED THUMB KEY
                       CMB_LAN, CMB_DOT, CMB_SPC // RIGHT THUMB KEYS
@@ -176,18 +177,18 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   [1] = MY_layout(
     // LEFT HALF
     _______, EN_7,    EN_5,    EN_3,    EN_1,    EN_9,    EN_CIRC,
-    _______, AC_GRV,  EN_S_X,  EN_S_Y,  EN_S_P,  EN_S_I,  CMB_CAC,
-    EN_AMPR, EN_S_A,  EN_S_O,  EN_S_E,  EN_S_U,  EN_S_I,  CMB_CAV,
-    EN_PIPE, AC_ACT,  EN_S_Q,  EN_S_J,  EN_S_K,  AC_CIRC, 
+    _______, EN_S_Q,  EN_S_W,  EN_S_E,  EN_S_R,  EN_S_T,  CMB_CAC,
+    EN_AMPR, EN_S_A,  EN_S_S,  EN_S_D,  EN_S_F,  EN_S_G,  CMB_CAV,
+    EN_PIPE, EN_S_Z,  EN_S_X,  EN_S_C,  EN_S_V,  EN_S_B,
     _______, _______, _______, _______, _______,
     _______, // LEFT RED THUMB KEY
     _______, _______, _______, // LEFT THUMB KEYS
 
     // RIGHT HALF
     RU_NUME, EN_0,    EN_2,    EN_4,    EN_6,    EN_8,    CT_Y,
-    CMB_TLD, EN_S_F,  EN_S_G,  EN_S_C,  EN_S_R,  EN_S_L,  EN_MINS,
-    CMB_DLR, EN_S_D,  EN_S_H,  EN_S_T,  EN_S_N,  EN_S_S,  XXXXXXX,
-             EN_S_B,  EN_S_M,  EN_S_W,  EN_S_V,  EN_S_Z,  XXXXXXX,
+    CMB_TLD, EN_S_Y,  EN_S_U,  EN_S_I,  EN_S_O,  EN_S_P,  EN_MINS,
+    CMB_DLR, EN_S_H,  EN_S_J,  EN_S_K,  EN_S_L,  EN_COLN, EN_DQUO,
+             EN_S_N,  EN_S_M,  EN_LT,   EN_GT,   EN_QUES, SFT_N,
                       _______, EN_PERC, _______, _______, _______,
                       _______, // RIGHT RED THUMB KEY
                       _______, _______, _______ // RIGHT THUMB KEYS
@@ -197,18 +198,18 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   [2] = MY_layout(
     // LEFT HALF
     _______, RU_PLUS, RU_SCLN, EN_GRV,  RU_COLN, RU_EQL,  EN_AT,
-    RU_UNDS, RU_J,    RU_TS,   RU_U,    RU_JE,   RU_F,    CMB_CTC,
-    RU_DQUO, RU_K,    RU_M,    RU_V,    RU_A,    RU_P,    CMB_CTV,
-    EN_QUOT, RU_JA,   RU_CH,   RU_S,    RU_I,    RU_Y,
+    RU_UNDS, RU_J,    RU_TS,   RU_U,    RU_K,    RU_JE,   CMB_CTC,
+    RU_DQUO, RU_F,    RU_Y,    RU_V,    RU_A,    RU_P,    CMB_CTV,
+    EN_QUOT, RU_JA,   RU_CH,   RU_S,    RU_M,    RU_I,
     _______, _______, _______, CMB_LYG, CMB_LYV,
     CMB_CTL, // LEFT RED THUMB KEY
     CMB_SFT, CMB_BSP, CMB_ENT, // LEFT THUMB KEYS
 
     // RIGHT HALF
     CT_D,    RU_ASTR, RU_EXCL, RU_QUES, EN_HASH, RU_SLSH, CT_Z,
-    CMB_CTS, RU_SC,   RU_G,    RU_T,    RU_N,    RU_Z,    RU_MINS,
+    CMB_CTS, RU_N,    RU_G,    CMS_SH,  RU_SC,   RU_Z,    RU_MINS,
     CMB_CMS, CMS_R,   RU_O,    RU_L,    RU_D,    RU_ZH,   RU_E,
-             CMS_SH,  RU_SF,   RU_B,    RU_JU,   RU_H,    RU_JO,
+             CMS_T,   RU_SF,   RU_B,    RU_JU,   RU_H,    RU_JO,
                       CMB_LYR, CMB_SLH, _______, _______, _______,
                       CMB_ALT, // RIGHT RED THUMB KEY
                       CMB_LAN, CMB_DOT, CMB_SPC // RIGHT THUMB KEYS
@@ -218,18 +219,18 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   [3] = MY_layout(
     // LEFT HALF
     _______, RU_7,    RU_5,    RU_3,    RU_1,    RU_9,    EN_CIRC,
-    _______, RU_S_J,  RU_S_TS, RU_S_U,  RU_S_JE, RU_S_F,  CMB_CAC,
-    EN_AMPR, RU_S_K,  RU_S_M,  RU_S_V,  RU_S_A,  RU_S_P,  CMB_CAV,
-    EN_PIPE, RU_S_JA, RU_S_CH, RU_S_S,  RU_S_I,  RU_S_Y,
+    _______, RU_S_J,  RU_S_TS, RU_S_U,  RU_S_K,  RU_S_JE, CMB_CAC,
+    EN_AMPR, RU_S_F,  RU_S_Y,  RU_S_V,  RU_S_A,  RU_S_P,  CMB_CAV,
+    EN_PIPE, RU_S_JA, RU_S_CH, RU_S_S,  RU_S_M,  RU_S_I,
     _______, _______, _______, _______, _______,
     _______, // LEFT RED THUMB KEY
     _______, _______, _______, // LEFT THUMB KEYS
 
     // RIGHT HALF
     RU_NUME, RU_0,    RU_2,    RU_4,    RU_6,    RU_8,    CT_Y,
-    CMB_TLD, RU_S_SC, RU_S_G,  RU_S_T,  RU_S_N,  RU_S_Z,  RU_MINS,
+    CMB_TLD, RU_S_N,  RU_S_G,  RU_S_SH, RU_S_SC, RU_S_Z,  RU_MINS,
     CMB_DLR, CMS_S_R, RU_S_O,  RU_S_L,  RU_S_D,  RU_S_ZH, RU_S_E,
-             CMS_SSH, RU_S_SF, RU_S_B,  RU_S_JU, RU_S_H,  RU_S_JO,
+             CMS_S_T, RU_S_SF, RU_S_B,  RU_S_JU, RU_S_H,  RU_S_JO,
                       _______, RU_PERC, _______, _______, _______,
                       _______, // RIGHT RED THUMB KEY
                       _______, _______,  _______ // RIGHT THUMB KEYS
@@ -423,11 +424,11 @@ const ComboWithKeycode combos[] PROGMEM = {
   // -------------------------------------------------------------------------
   // Russian combos on letters
   CHORD(RU_R,    /* <- */ CMS_R),
-  CHORD(RU_SH,   /* <- */ CMS_SH),
-  CHORD(RU_HD,   /* <- */ CMS_R, CMS_SH),
+  CHORD(RU_T,    /* <- */ CMS_T),
+  CHORD(RU_HD,   /* <- */ CMS_R, CMS_T),
   CHORD(RU_S_R,  /* <- */ CMS_S_R),
-  CHORD(RU_S_SH, /* <- */ CMS_SSH),
-  CHORD(RU_S_HD, /* <- */ CMS_S_R, CMS_SSH),
+  CHORD(RU_S_T,  /* <- */ CMS_S_T),
+  CHORD(RU_S_HD, /* <- */ CMS_S_R, CMS_S_T),
 };
 const uint8_t combos_size = sizeof(combos)/sizeof(ComboWithKeycode);
 
