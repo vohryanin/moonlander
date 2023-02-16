@@ -19,7 +19,7 @@ enum custom_hotkeys_keycodes {
   CT_Z,
   KC_LF5,
   KC_RG5,
-  СT_CIRC,
+  CT_RBRC,
 
   CUSTOM_HOTKEYS_NEW_SAFE_RANGE,
   #undef CUSTOM_SAFE_RANGE
@@ -154,7 +154,7 @@ bool process_my_hotkeys(uint16_t keycode, keyrecord_t *record) {
         unregister_code(KC_LCTRL);
       }
       return false;
-    case CT_CIRC:
+    case CT_RBRC:
       if (record->event.pressed) {
         lang_activate(0);
         register_code(KC_LCTRL);
