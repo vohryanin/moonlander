@@ -252,7 +252,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______, EN_MACR, EN_RBRC, EN_RCBR, EN_LCBR, EN_LBRC, CT_ENT,
     _______, KC_TAB,  EN_GT,   AG_RPRN, AG_LPRN, EN_LT,   SH_TAB,
              EN_FISH, EN_GTEQ, EN_ARR2, EN_ARR1, EN_LTEQ, EN_CLTG,
-                      _______, _______, _______, _______, _______,
+                      _______, CMB_ALT, KC_TAB, _______, _______,
                       _______, // RIGHT RED THUMB KEY
                       _______, _______, _______ // RIGHT THUMB KEYS
     ),
