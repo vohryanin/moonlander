@@ -158,9 +158,9 @@ bool process_my_hotkeys(uint16_t keycode, keyrecord_t *record) {
       if (record->event.pressed) {
         lang_activate(0);
         register_code(KC_LCTRL);
-        register_code(КС_CIRC);
+        register_code(KC_RBRC);
       } else {
-        unregister_code(КС_CIRC);
+        unregister_code(KC_RBRC);
         unregister_code(KC_LCTRL);
       }
       return false;
