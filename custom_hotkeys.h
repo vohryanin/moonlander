@@ -19,7 +19,7 @@ enum custom_hotkeys_keycodes {
   CT_Z,
   KC_LF5,
   KC_RG5,
-  КС_CIRC,
+  СT_CIRC,
 
   CUSTOM_HOTKEYS_NEW_SAFE_RANGE,
   #undef CUSTOM_SAFE_RANGE
