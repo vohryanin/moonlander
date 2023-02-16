@@ -168,7 +168,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     CMB_CTS, EN_Y,    EN_U,    EN_I,    EN_O,    EN_P,    EN_MINS,
     CMB_CMS, EN_H,    EN_J,    EN_K,    EN_L,    EN_SCLN, EN_QUOT,
              EN_N,    EN_M,    EN_COMM, EN_DOT,  EN_SLSH, AC_TILD,
-                      CMB_LYR, CMB_SLH, KG_NEXT, TT_006,  TT_009,
+                      CMB_LYR, CMB_SLH, CT_CIRC, TT_006,  TT_009,
                       CMB_ALT, // RIGHT RED THUMB KEY
                       CMB_LAN, CMB_DOT, CMB_SPC // RIGHT THUMB KEYS
   ),
