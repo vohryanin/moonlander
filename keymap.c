@@ -152,6 +152,7 @@ LAYOUT_moonlander( \
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   //---------------------------------------------------------------------------
+  //английская без шифта
   // TODO надо разобраться, куда поместить AC_CIRC, AC_GRV, AC_ACT, сделать их независящими от текущей раскладки
   [0] = MY_layout(
     // LEFT HALF
@@ -174,6 +175,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   ),
 
   //---------------------------------------------------------------------------
+  //английская с зажатым шифтом
   [1] = MY_layout(
     // LEFT HALF
     _______, EN_7,    EN_5,    EN_3,    EN_1,    EN_9,    EN_CIRC,
@@ -195,6 +197,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   ),
 
   //---------------------------------------------------------------------------
+  //русская без шифта
   [2] = MY_layout(
     // LEFT HALF
     _______, RU_PLUS, RU_SCLN, EN_GRV,  RU_COLN, RU_EQL,  EN_AT,
@@ -216,6 +219,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   ),
 
   //---------------------------------------------------------------------------
+  //русская с шифтом
   [3] = MY_layout(
     // LEFT HALF
     _______, RU_7,    RU_5,    RU_3,    RU_1,    RU_9,    EN_CIRC,
