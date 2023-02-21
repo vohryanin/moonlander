@@ -165,9 +165,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     CMB_SFT, CMB_BSP, CMB_ENT, // LEFT THUMB KEYS
 
     // RIGHT HALF
-    RU_NUME,    EN_ASTR, EN_EXCL, EN_QUES, EN_HASH, EN_SLSH, CT_Z,
-    CMB_TLD, EN_Y,    EN_U,    EN_I,    EN_O,    EN_P,    EN_MINS,
-    CMB_DLR, EN_H,    EN_J,    EN_K,    EN_L,    EN_SCLN, EN_QUOT,
+    CT_D,    EN_ASTR, EN_EXCL, EN_QUES, EN_HASH, EN_SLSH, CT_Z,
+    CMB_CTS, EN_Y,    EN_U,    EN_I,    EN_O,    EN_P,    EN_MINS,
+    CMB_CMS, EN_H,    EN_J,    EN_K,    EN_L,    EN_SCLN, EN_QUOT,
              EN_N,    EN_M,    EN_COMM, EN_DOT,  EN_SLSH, AC_TILD,
                       CMB_LYR, CMB_SLH, CT_RBRC, TT_006,  TT_009,
                       CMB_ALT, // RIGHT RED THUMB KEY
@@ -187,9 +187,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______, _______, _______, // LEFT THUMB KEYS
 
     // RIGHT HALF
-    CT_D, EN_0,    EN_2,    EN_4,    EN_6,    EN_8,    CT_Y,
-    CMB_CTS, EN_S_Y,  EN_S_U,  EN_S_I,  EN_S_O,  EN_S_P,  EN_MINS,
-    CMB_CMS, EN_S_H,  EN_S_J,  EN_S_K,  EN_S_L,  EN_COLN, EN_DQUO,
+    RU_NUME, EN_0,    EN_2,    EN_4,    EN_6,    EN_8,    CT_Y,
+    CMB_TLD, EN_S_Y,  EN_S_U,  EN_S_I,  EN_S_O,  EN_S_P,  EN_MINS,
+    CMB_DLR, EN_S_H,  EN_S_J,  EN_S_K,  EN_S_L,  EN_COLN, EN_DQUO,
              EN_S_N,  EN_S_M,  EN_LT,   EN_GT,   EN_QUES, SFT_N,
                       _______, EN_PERC, _______, _______, _______,
                       _______, // RIGHT RED THUMB KEY
@@ -209,9 +209,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     CMB_SFT, CMB_BSP, CMB_ENT, // LEFT THUMB KEYS
 
     // RIGHT HALF
-    RU_NUME,    RU_ASTR, RU_EXCL, RU_QUES, EN_HASH, RU_SLSH, CT_Z,
-    CMB_TLD, RU_N,    RU_G,    RU_SH,  RU_SC,   RU_Z,    RU_MINS,
-    CMB_DLR, CMS_R,   RU_O,    RU_L,    RU_D,    RU_ZH,   RU_E,
+    CT_D,    RU_ASTR, RU_EXCL, RU_QUES, EN_HASH, RU_SLSH, CT_Z,
+    CMB_CTS, RU_N,    RU_G,    RU_SH,  RU_SC,   RU_Z,    RU_MINS,
+    CMB_CMS, CMS_R,   RU_O,    RU_L,    RU_D,    RU_ZH,   RU_E,
              CMS_T,   RU_SF,   RU_B,    RU_JU,   RU_H,    RU_JO,
                       CMB_LYR, CMB_SLH, _______, _______, _______,
                       CMB_ALT, // RIGHT RED THUMB KEY
@@ -231,9 +231,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______, _______, _______, // LEFT THUMB KEYS
 
     // RIGHT HALF
-    CT_D, RU_0,    RU_2,    RU_4,    RU_6,    RU_8,    CT_Y,
-    CMB_CTS, RU_S_N,  RU_S_G,  RU_S_SH, RU_S_SC, RU_S_Z,  RU_MINS,
-    CMB_CMS, CMS_S_R, RU_S_O,  RU_S_L,  RU_S_D,  RU_S_ZH, RU_S_E,
+    RU_NUME, RU_0,    RU_2,    RU_4,    RU_6,    RU_8,    CT_Y,
+    CMB_TLD, RU_S_N,  RU_S_G,  RU_S_SH, RU_S_SC, RU_S_Z,  RU_MINS,
+    CMB_DLR, CMS_S_R, RU_S_O,  RU_S_L,  RU_S_D,  RU_S_ZH, RU_S_E,
              CMS_S_T, RU_S_SF, RU_S_B,  RU_S_JU, RU_S_H,  RU_S_JO,
                       _______, RU_PERC, _______, _______, _______,
                       _______, // RIGHT RED THUMB KEY
