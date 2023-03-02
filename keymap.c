@@ -48,6 +48,8 @@ LAYOUT_moonlander( \
 
 // Shift keys
 #define SH_TAB S(KC_TAB)
+#define SH_INS S(KC_INS)
+#define SH_ENT S(KC_ENT)
 
 // Ctrl+Shift keys
 #define CS_T LCTL(S(KC_T))
@@ -104,6 +106,7 @@ LAYOUT_moonlander( \
 #define CT_X LCTL(KC_X)
 #define CT_C LCTL(KC_C)
 #define CT_V LCTL(KC_V)
+#define CT_INS LCTL(KC_INS)
 
 #define RGB_LYR TOGGLE_LAYER_COLOR
 
@@ -241,15 +244,16 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 
   //---------------------------------------------------------------------------
+  //красный слой
   [4] = MY_layout(
     // LEFT HALF
     TG(4),   KC_F7,   KC_F5,   KC_F3,   KC_F1,   KC_F9,   KC_F11,
-    CT_G,    KC_HOME, KC_PGDN, KC_PGUP, KC_END,  CT_J,    _______,
-    CS_M,    KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, CS_K,    _______,
+    CT_G,    KC_HOME, KC_PGDN, KC_PGUP, KC_END,  CT_J,    CT_INS,
+    CS_M,    KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, CS_K,    SH_INS,
     _______, CT_LEFT, CT_DOWN, CT_UP,   CT_RGHT, CT_F,
     _______, _______, _______, _______, _______,
     _______, // LEFT RED THUMB KEY
-    _______, _______, _______, // LEFT THUMB KEYS
+    _______, _______, SH_ENT, // LEFT THUMB KEYS
 
     // RIGHT HALF
     KC_F12,  KC_F10,  KC_F2,   KC_F4,   KC_F6,   KC_F8,   _______,
