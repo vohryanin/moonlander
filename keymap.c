@@ -82,7 +82,7 @@ LAYOUT_moonlander( \
 #define WN_F3 LGUI(KC_F3)
 #define WN_Q LGUI(KC_Q)
 #define WN_L LGUI(KC_L)
-#define CWN_RIGHT LGUI(LCTL(KC_RGHT))
+#define CWN_RGHT LGUI(LCTL(KC_RGHT))
 #define CWN_LEFT  LGUI(LCTL(KC_LEFT))
 
 // Ctrl keys
@@ -324,7 +324,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     // RIGHT HALF
     _______, _______, _______, _______, _______, _______, _______,
     _______, _______, _______, _______, _______, _______, _______,
-    _______, _______, CWN_LEFT, _______, _______, CWN_RIGHT, _______,
+    _______, _______, CWN_LEFT, _______, _______, CWN_RGHT, _______,
              _______, _______, _______, _______, _______, _______,
                       _______, _______, _______, _______, _______,
                       _______, // RIGHT RED THUMB KEY
