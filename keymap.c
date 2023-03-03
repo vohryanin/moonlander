@@ -82,8 +82,8 @@ LAYOUT_moonlander( \
 #define WN_F3 LGUI(KC_F3)
 #define WN_Q LGUI(KC_Q)
 #define WN_L LGUI(KC_L)
-#define CWN_RIGHT LGUI(LCTL(RIGHT))
-#define CWN_LEFT  LGUI(LCTL(LEFT))
+#define CWN_RIGHT LGUI(LCTL(KC_RGHT))
+#define CWN_LEFT  LGUI(LCTL(KC_LEFT))
 
 // Ctrl keys
 #define CT_LEFT LCTL(KC_LEFT)
