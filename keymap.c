@@ -82,6 +82,8 @@ LAYOUT_moonlander( \
 #define WN_F3 LGUI(KC_F3)
 #define WN_Q LGUI(KC_Q)
 #define WN_L LGUI(KC_L)
+#define CWN_RIGHT LGUI(LCTL(RIGHT))
+#define CWN_LEFT  LGUI(LCTL(LEFT))
 
 // Ctrl keys
 #define CT_LEFT LCTL(KC_LEFT)
@@ -308,6 +310,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 
   //---------------------------------------------------------------------------
+  // Фиолетовый слой
   [7] = MY_layout(
     // LEFT HALF
     TG(7),   _______, _______, _______, _______, _______, _______,
@@ -321,7 +324,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     // RIGHT HALF
     _______, _______, _______, _______, _______, _______, _______,
     _______, _______, _______, _______, _______, _______, _______,
-    _______, _______, _______, _______, _______, _______, _______,
+    _______, _______, CWN_LEFT, _______, _______, CWN_RIGHT, _______,
              _______, _______, _______, _______, _______, _______,
                       _______, _______, _______, _______, _______,
                       _______, // RIGHT RED THUMB KEY
