@@ -110,6 +110,9 @@ LAYOUT_moonlander( \
 #define CT_V LCTL(KC_V)
 #define CT_INS LCTL(KC_INS)
 
+// Alt Shift keys
+#define ALS_INS LALT(S(KC_INS))
+
 #define RGB_LYR TOGGLE_LAYER_COLOR
 
 // Chords
@@ -268,6 +271,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 
   //---------------------------------------------------------------------------
+  //зеленый слой
   [5] = MY_layout(
     // LEFT HALF
     TG(5),   _______, _______, _______, _______,  _______,  _______,
@@ -280,7 +284,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     // RIGHT HALF
     _______, _______, _______, _______, _______, _______, RESET,
-    _______, _______, KC_WH_L, KC_WH_U, KC_WH_D, KC_WH_R, _______,
+    _______, ALS_INS, KC_WH_L, KC_WH_U, KC_WH_D, KC_WH_R, _______,
     _______, _______, KC_MS_L, KC_MS_U, KC_MS_D, KC_MS_R, _______,
              _______, MS_LF_1, MS_UP_1, MS_DN_1, MS_RG_1, _______,
                       MS_LF10, MS_UP10, MS_DN10, MS_RG10, _______,
