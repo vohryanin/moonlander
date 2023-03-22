@@ -113,6 +113,10 @@ LAYOUT_moonlander( \
 // Alt Shift keys
 #define ALS_INS LALT(S(KC_INS))
 
+//Ctrl Alt keys
+#define CA_LEFT LCTL(LALT(KC_LEFT))
+#define CA_RGHT LCTL(LALT(KC_RGHT))
+
 #define RGB_LYR TOGGLE_LAYER_COLOR
 
 // Chords
@@ -329,7 +333,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______, _______, _______, _______, _______, _______, _______,
     _______, _______, _______, _______, _______, _______, _______,
     _______, _______, CWN_LEFT, _______, _______, CWN_RGHT, _______,
-             _______, _______, _______, _______, _______, _______,
+             _______, CA_LEFT,  _______, _______, CA_RGHT,  _______,
                       _______, _______, _______, _______, _______,
                       _______, // RIGHT RED THUMB KEY
                       _______, _______, _______ // RIGHT THUMB KEYS
