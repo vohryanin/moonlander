@@ -220,7 +220,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     RU_UNDS, RU_J,    RU_TS,   RU_U,    RU_K,    RU_JE,   CMB_CTC,
     KC_TAB,  RU_F,    RU_Y,    RU_V,    RU_A,    RU_P,    CMB_CTV,
     RU_DQUO, RU_JA,   RU_CH,   RU_S,    RU_M,    RU_I,
-    KC_QUOT, _______, _______, CMB_LYG, CMB_LYV,
+    KS_QUOT, _______, _______, CMB_LYG, CMB_LYV,
     CMB_CTL, // LEFT RED THUMB KEY
     CMB_SFT, CMB_BSP, CMB_ENT, // LEFT THUMB KEYS
 
