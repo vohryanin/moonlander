@@ -84,6 +84,10 @@ LAYOUT_moonlander( \
 #define WN_L LGUI(KC_L)
 #define CWN_RGHT LGUI(LCTL(KC_RGHT))
 #define CWN_LEFT  LGUI(LCTL(KC_LEFT))
+#define WN_LEFT LGUI(KC_LEFT)
+#define WN_RGHT LGUI(KC_RGHT)
+#define WN_UP LGUI(KC_UP)
+#define WN_DOWN LGUI(KC_DOWN)
 
 // Ctrl keys
 #define CT_LEFT LCTL(KC_LEFT)
@@ -170,9 +174,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     // LEFT HALF
     KC_ESC,  EN_PLUS, EN_SCLN, EN_GRV,  EN_COLN, EN_EQL,  EN_AT,
     EN_UNDS, EN_Q,  EN_W,    EN_E,    EN_R,    EN_T,  CMB_CTC,
-    EN_DQUO, EN_A,  EN_S,    EN_D,    EN_F,    EN_G,  CMB_CTV,
-    EN_QUOT, EN_Z,  EN_X,    EN_C,    EN_V,    EN_B,
-    MU_CTJ,  TT_008,  CT_SLSH, CMB_LYG, CMB_LYV,
+    KC_TAB,  EN_A,  EN_S,    EN_D,    EN_F,    EN_G,  CMB_CTV,
+    EN_DQUO, EN_Z,  EN_X,    EN_C,    EN_V,    EN_B,
+    EN_QUOT, TT_008,  CT_SLSH, CMB_LYG, CMB_LYV,
     CMB_CTL, // LEFT RED THUMB KEY
     CMB_SFT, CMB_BSP, CMB_ENT, // LEFT THUMB KEYS
 
@@ -214,9 +218,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     // LEFT HALF
     _______, RU_PLUS, RU_SCLN, EN_GRV,  RU_COLN, RU_EQL,  EN_AT,
     RU_UNDS, RU_J,    RU_TS,   RU_U,    RU_K,    RU_JE,   CMB_CTC,
-    RU_DQUO, RU_F,    RU_Y,    RU_V,    RU_A,    RU_P,    CMB_CTV,
-    EN_QUOT, RU_JA,   RU_CH,   RU_S,    RU_M,    RU_I,
-    _______, _______, _______, CMB_LYG, CMB_LYV,
+    KC_TAB,  RU_F,    RU_Y,    RU_V,    RU_A,    RU_P,    CMB_CTV,
+    RU_DQUO, RU_JA,   RU_CH,   RU_S,    RU_M,    RU_I,
+    EN_QUOT, _______, _______, CMB_LYG, CMB_LYV,
     CMB_CTL, // LEFT RED THUMB KEY
     CMB_SFT, CMB_BSP, CMB_ENT, // LEFT THUMB KEYS
 
@@ -331,7 +335,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     // RIGHT HALF
     _______, _______, _______, _______, _______, _______, _______,
-    _______, _______, _______, _______, _______, _______, _______,
+    _______, _______, WN_LEFT, WN_DOWN, WN_UP,   WN_RGHT, _______,
     _______, _______, CWN_LEFT, _______, _______, CWN_RGHT, _______,
              _______, CA_LEFT,  _______, _______, CA_RGHT,  _______,
                       _______, _______, _______, _______, _______,
