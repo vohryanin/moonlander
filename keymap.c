@@ -328,7 +328,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     TG(7),   _______, _______, _______, _______, _______, _______,
     AL_UP,   WN_8,    WN_7,    WN_6,    WN_5,    WN_F1,   _______,
     WN_Q,    WN_4,    WN_3,    WN_2,    WN_1,    WN_F2,   _______,
-    KC_F2,   ______,  KC_TAB,  KC_LCTL, WN_9,    WN_F3,
+    KC_F2,   _______, KC_TAB,  KC_LCTL, WN_9,    WN_F3,
     _______, _______, KC_TAB,  KC_LALT, _______,
     _______, // LEFT RED THUMB KEY
     _______, _______, _______, // LEFT THUMB KEYS
