@@ -66,6 +66,7 @@ LAYOUT_moonlander( \
 // Alt keys
 #define AL_UP LALT(KC_UP)
 #define AL_PSCR LALT(KC_PSCR)
+#define AL_TAB LALT(KC_TAB)
 
 // Gui keys
 #define WN_1 LGUI(KC_1)
@@ -88,6 +89,7 @@ LAYOUT_moonlander( \
 #define WN_RGHT LGUI(KC_RGHT)
 #define WN_UP LGUI(KC_UP)
 #define WN_DOWN LGUI(KC_DOWN)
+#define WN_TAB LGUI(KC_TAB)
 
 // Ctrl keys
 #define CT_LEFT LCTL(KC_LEFT)
@@ -113,6 +115,7 @@ LAYOUT_moonlander( \
 #define CT_C LCTL(KC_C)
 #define CT_V LCTL(KC_V)
 #define CT_INS LCTL(KC_INS)
+#define CT_TAB LCTL(KC_TAB)
 
 // Alt Shift keys
 #define ALS_INS LALT(S(KC_INS))
@@ -328,7 +331,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     TG(7),   _______, _______, _______, _______, _______, _______,
     AL_UP,   WN_8,    WN_7,    WN_6,    WN_5,    WN_F1,   _______,
     WN_Q,    WN_4,    WN_3,    WN_2,    WN_1,    WN_F2,   _______,
-    KC_F2,   _______, _______, _______, WN_9,    WN_F3,
+    KC_F2,   WN_TAB,  CT_TAB,  AL_TAB,  WN_9,    WN_F3,
     _______, _______, _______, _______, _______,
     _______, // LEFT RED THUMB KEY
     _______, _______, _______, // LEFT THUMB KEYS
