@@ -418,7 +418,7 @@ const ComboWithKeycode combos[] PROGMEM = {
   CHORD(LA_SYNC, /* <- */ CMB_LAN, CMB_DOT),
   CHORD(CTAL_0,  /* <- */ CMB_SPC, CMB_ALT),
   CHORD(SHAL_0,  /* <- */ CMB_DOT, CMB_ALT),
-  CHORD(WIN_0,   /* <- */ CMB_SPC, CMB_DOT, CMB_ALT),
+  CHORD(WIN_EN,   /* <- */ CMB_SPC, CMB_DOT, CMB_ALT),
   CHORD(MU_WNL,  /* <- */ CMB_LAN, CMB_DOT, CMB_ALT),
 
   // Right Right Thumb
