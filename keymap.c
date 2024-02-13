@@ -301,6 +301,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   ),
 
   //---------------------------------------------------------------------------
+  // Малиновый слой (Слой для игр)
   [6] = MY_layout(
     // LEFT HALF
     KC_ESC,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,
@@ -317,8 +318,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     XXXXXXX, KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, XXXXXXX,
              KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, XXXXXXX,
                       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-                      XXXXXXX, // RIGHT RED THUMB KEY
-                      XXXXXXX, XXXXXXX, XXXXXXX // RIGHT THUMB KEYS
+                      CMB_CTL, // RIGHT RED THUMB KEY
+                      CMB_ENT, CMB_BSP, CMB_SFT // RIGHT THUMB KEYS
     ),
 
   //---------------------------------------------------------------------------
@@ -344,7 +345,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   ),
   
   //---------------------------------------------------------------------------
-  // Малиновый слой (слой для игр)
+  // Желтый слой
   [8] = MY_layout(
     // LEFT HALF
     TG(8),   RGB_HUI, RGB_SAI, RGB_VAI, RGB_SPI, RGB_MOD, RGB_TOG,
@@ -360,12 +361,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______, _______, _______, _______, _______, _______, _______,
     _______, LED_1,   LED_2,   LED_3,   LED_4,   LED_5,   LED_6,
              _______, _______, _______, _______, _______, _______,
-                      CMB_CTL, CMB_SFT, KC_ENT,  _______, _______,
-                      CMB_CTL, // RIGHT RED THUMB KEY
-                      CMB_ENT, CMB_BSP, CMB_SFT // RIGHT THUMB KEYS
+                      _______, _______, _______,  _______, _______,
+                      _______, // RIGHT RED THUMB KEY
+                      _______, _______, _______ // RIGHT THUMB KEYS
   ),
 
   //---------------------------------------------------------------------------
+  // Оранжевый слой (Слой на случай ядерной войны)
   [9] = MY_layout(
     // LEFT HALF
     TG(9),   KC_SLCK, KC_CAPS, KC_INS,  KC_PAUS, KC_PSCR, KC_APP,
