@@ -344,6 +344,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   ),
   
   //---------------------------------------------------------------------------
+  // Малиновый слой (слой для игр)
   [8] = MY_layout(
     // LEFT HALF
     TG(8),   RGB_HUI, RGB_SAI, RGB_VAI, RGB_SPI, RGB_MOD, RGB_TOG,
@@ -359,7 +360,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______, _______, _______, _______, _______, _______, _______,
     _______, LED_1,   LED_2,   LED_3,   LED_4,   LED_5,   LED_6,
              _______, _______, _______, _______, _______, _______,
-                      _______, _______, _______, _______, _______,
+                      CMB_CTL, CMB_SFT, CMB_ENT, _______, _______,
                       _______, // RIGHT RED THUMB KEY
                       _______, _______, _______ // RIGHT THUMB KEYS
   ),
