@@ -360,7 +360,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______, _______, _______, _______, _______, _______, _______,
     _______, LED_1,   LED_2,   LED_3,   LED_4,   LED_5,   LED_6,
              _______, _______, _______, _______, _______, _______,
-                      CMB_CTL, CMB_SFT, CMB_ENT, _______, _______,
+                      CMB_CTL, CMB_SFT, KC_ENT,  _______, _______,
                       _______, // RIGHT RED THUMB KEY
                       _______, _______, _______ // RIGHT THUMB KEYS
   ),
