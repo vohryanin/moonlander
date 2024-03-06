@@ -337,8 +337,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     // RIGHT HALF
     _______, _______, _______, _______, _______, _______, _______,
     _______, _______, WN_LEFT, WN_DOWN, WN_UP,   WN_RGHT, _______,
-    _______, _______, CWN_LEFT, _______, _______, CWN_RGHT, _______,
-             _______, CA_LEFT,  _______, _______, CA_RGHT,  _______,
+    _______, _______, CA_LEFT, _______, _______, CA_RGHT, _______,
+             _______, CWN_LEFT,  _______, _______, CWN_RGHT,  _______,
                       _______, _______, _______, _______, _______,
                       _______, // RIGHT RED THUMB KEY
                       _______, _______, _______ // RIGHT THUMB KEYS
