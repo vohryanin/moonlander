@@ -474,6 +474,26 @@ bool lang_shift_process_custom_keycodes(Key key, keyrecord_t* record) {
         }
       }
       return false;
+    case LA_EN:
+      if (down) {
+       lang_activate_from_user(0);
+       layer_off(2);
+       register_code(KC_LCTRL);
+       register_code(KC_3);
+       unregister_code(KC_3);
+       unregister_code(KC_LCTL);
+      }
+      return false;
+    case LA_RU:
+      if (down) {
+       lang_activate_from_user(1);
+       layer_on(2);
+       register_code(KC_LCTRL);
+       register_code(KC_4);
+       unregister_code(KC_4);
+       unregister_code(KC_LCTL);
+      }
+      return false;
     case LA_SYNC:
       if (down) {
         lang_synchronize();
