@@ -20,8 +20,6 @@ enum custom_hotkeys_keycodes {
   KC_LF5,
   KC_RG5,
   CT_RBRC,
-  LA_EN,
-  LA_RU,
 
   CUSTOM_HOTKEYS_NEW_SAFE_RANGE,
   #undef CUSTOM_SAFE_RANGE
@@ -163,26 +161,6 @@ bool process_my_hotkeys(uint16_t keycode, keyrecord_t *record) {
         register_code(KC_RBRC);
       } else {
         unregister_code(KC_RBRC);
-        unregister_code(KC_LCTRL);
-      }
-      return false;
-    case LA_EN:
-      if (record->event.pressed) {
-        lang_activate(0);
-        register_code(KC_LCTRL);
-        register_code(KC_3);
-      } else {
-        unregister_code(KC_3);
-        unregister_code(KC_LCTRL);
-      }
-      return false;
-    case LA_RU:
-      if (record->event.pressed) {
-        lang_activate(0);
-        register_code(KC_LCTRL);
-        register_code(KC_4);
-      } else {
-        unregister_code(KC_4);
         unregister_code(KC_LCTRL);
       }
       return false;
