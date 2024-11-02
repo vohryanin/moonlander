@@ -479,9 +479,11 @@ bool lang_shift_process_custom_keycodes(Key key, keyrecord_t* record) {
        lang_activate_from_user(0);
        layer_off(2);
        register_code(KC_LCTRL);
-       register_code(KC_3);
-       unregister_code(KC_3);
-       unregister_code(KC_LCTL);
+       register_code(KC_LSHIFT);
+       register_code(KC_0);
+       unregister_code(KC_0);
+       unregister_code(KC_LSHIFT);
+       unregister_code(KC_LCTRL);
       }
       return false;
     case LA_RU:
@@ -489,9 +491,11 @@ bool lang_shift_process_custom_keycodes(Key key, keyrecord_t* record) {
        lang_activate_from_user(1);
        layer_on(2);
        register_code(KC_LCTRL);
-       register_code(KC_4);
-       unregister_code(KC_4);
-       unregister_code(KC_LCTL);
+       register_code(KC_LSHIFT);
+       register_code(KC_1);
+       unregister_code(KC_1);
+       unregister_code(KC_LSHIFT);
+       unregister_code(KC_LCTRL);
       }
       return false;
     case LA_SYNC:
