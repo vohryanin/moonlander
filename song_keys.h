@@ -8,6 +8,8 @@ enum songs_keycodes {
   SONGS_START = CUSTOM_SAFE_RANGE,
 
   MU_LANG,
+  MU_LAEN,
+  MU_LARU,
   MU_LAN1,
   MU_LAN2,
   MU_LAN3,
@@ -56,6 +58,8 @@ bool process_my_music_keys(uint16_t keycode, keyrecord_t *record) {
 
   switch (keycode) {
     MUSIC_KEYCODE(MU_LANG, LA_CHNG, my_song1)
+    MUSIC_KEYCODE(MU_LAEN, LA_EN, my_song1)
+    MUSIC_KEYCODE(MU_LARU, LA_RU, my_song1)
     MUSIC_KEYCODE(MU_LAN1, LA_CAPS, my_song2)
     MUSIC_KEYCODE(MU_LAN2, LA_ALSH, my_song4)
     MUSIC_KEYCODE(MU_LAN3, LA_CTSH, my_song5)

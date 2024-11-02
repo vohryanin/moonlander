@@ -413,12 +413,12 @@ const ComboWithKeycode combos[] PROGMEM = {
   CHORD(TT_004,  /* <- */ CMB_LYV, CMB_LYG),
 
   // Right Thumb
-  CHORD(MU_LANG, /* <- */ CMB_LAN),
+  CHORD(MU_LAEN, /* <- */ CMB_LAN),
   CHORD(AG_DOT,  /* <- */ CMB_DOT),
   CHORD(KC_SPC,  /* <- */ CMB_SPC),
   CHORD(ALT_0,   /* <- */ CMB_ALT),
   CHORD(AG_SDOT, /* <- */ CMB_DOT, CMB_SPC),
-  CHORD(LA_SYNC, /* <- */ CMB_LAN, CMB_DOT),
+  CHORD(MU_LARU, /* <- */ CMB_LAN, CMB_DOT),
   CHORD(CTAL_0,  /* <- */ CMB_SPC, CMB_ALT),
   CHORD(SHAL_0,  /* <- */ CMB_DOT, CMB_ALT),
   CHORD(WIN_EN,   /* <- */ CMB_SPC, CMB_DOT, CMB_ALT),
