@@ -195,7 +195,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   [1] = MY_layout(
     // LEFT HALF
     _______, EN_7,    EN_5,    EN_3,    EN_1,    EN_9,    EN_CIRC,
-    EN_TILD, EN_S_Q,  EN_S_W,  EN_S_E,  EN_S_R,  EN_S_T,  CMB_CAC,
+    _______, EN_S_Q,  EN_S_W,  EN_S_E,  EN_S_R,  EN_S_T,  CMB_CAC,
     EN_AMPR, EN_S_A,  EN_S_S,  EN_S_D,  EN_S_F,  EN_S_G,  CMB_CAV,
     EN_PIPE, EN_S_Z,  EN_S_X,  EN_S_C,  EN_S_V,  EN_S_B,
     _______, _______, _______, _______, _______,
@@ -239,7 +239,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   [3] = MY_layout(
     // LEFT HALF
     _______, RU_7,    RU_5,    RU_3,    RU_1,    RU_9,    EN_CIRC,
-    EN_TILD, RU_S_J,  RU_S_TS, RU_S_U,  RU_S_K,  RU_S_JE, CMB_CAC,
+    _______, RU_S_J,  RU_S_TS, RU_S_U,  RU_S_K,  RU_S_JE, CMB_CAC,
     EN_AMPR, RU_S_F,  RU_S_Y,  RU_S_V,  RU_S_A,  RU_S_P,  CMB_CAV,
     EN_PIPE, RU_S_JA, RU_S_CH, RU_S_S,  RU_S_M,  RU_S_I,
     _______, _______, _______, _______, _______,
