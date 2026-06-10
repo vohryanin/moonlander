@@ -7,6 +7,12 @@ Shift shift_current = 0;
 uint32_t shift_timer = 0;
 uint8_t shift_pressed_count = 0;
 
+void shift_force_release(void) {
+	unregister_code(KC_LSHIFT);
+	shift_current = 0;
+	shift_timer = timer_read();
+}
+
 Key shift_get_key(Key key) {
   switch (key) {
     case KS_GRV:  return KC_GRV;
@@ -130,7 +136,11 @@ void shift_activate(Shift shift) {
 
 void shift_activate_from_user(Shift shift) {
   shift_should_be = shift;
-  shift_activate(shift);
+  if (shift) {
+    shift_activate(shift);
+  } else {
+    shift_force_release();
+  }
 }
 
 Key shift_process(Key key, bool down) {
@@ -145,9 +155,15 @@ Key shift_process(Key key, bool down) {
 
 	if (new_shift != NONE_SHIFT) {
 		if (down) {
-			shift_pressed_count++;
+			if (shift_pressed_count < 255) {
+				shift_pressed_count++;
+			}
 		} else {
-			shift_pressed_count--;
+			if (shift_pressed_count > 0) {
+				shift_pressed_count--;
+			} else if (!shift_should_be) {
+				shift_force_release();
+			}
 		}
 	}
 
@@ -157,7 +173,11 @@ Key shift_process(Key key, bool down) {
 void shift_user_timer(void) {
 	// Нужно выключать шифт после прохождения определённого времени, потому что пользователь ожидает как будто шифт на самом деле включён
 	if (shift_pressed_count == 0 && shift_current != shift_should_be && timer_read() - shift_timer >= 100) {
-		shift_activate(shift_should_be);
+		if (shift_should_be) {
+			shift_activate(shift_should_be);
+		} else {
+			shift_force_release();
+		}
 		shift_timer = timer_read();
 	}
 }
