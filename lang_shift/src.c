@@ -252,6 +252,10 @@ Lang lang_current = 0;
 uint32_t lang_timer = 0;
 uint8_t lang_pressed_count = 0;
 
+#ifndef LANG_MODIFIERS_STACK_SIZE
+  #define LANG_MODIFIERS_STACK_SIZE 8
+#endif
+
 Key lang_get_key(Key key) {
   if (EN_GRV <= key && key <= EN_QUES) {
     return (key - EN_GRV) + KS_GRV;
@@ -372,7 +376,7 @@ void lang_synchronize(void) {
       register_code(KC_LCTRL);
       register_code(KC_LSHIFT);
       unregister_code(KC_LSHIFT);
-      unregister_code(KC_LCTL);
+      unregister_code(KC_LCTRL);
 
       // Костыль, потому что при зажатом шифте если хочется нажать клавишу, которая переключает язык, то шифт слетает...
       if (shift_current == 1) {
@@ -423,9 +427,13 @@ Key lang_process(Key key, bool down) {
 
   if (new_lang != NONE_LANG) {
     if (down) {
-      lang_pressed_count++;
+      if (lang_pressed_count < 255) {
+        lang_pressed_count++;
+      }
     } else {
-      lang_pressed_count--;
+      if (lang_pressed_count > 0) {
+        lang_pressed_count--;
+      }
     }
   }
 
@@ -579,13 +587,15 @@ bool lang_shift_process_custom_keycodes(Key key, keyrecord_t* record) {
 }
 
 bool lang_shift_process_english_modifiers(Key key, keyrecord_t* record) {
-  static Lang lang_stack[3] = {};
+  static Lang lang_stack[LANG_MODIFIERS_STACK_SIZE] = {};
   static uint8_t modifiers_count = 0;
   #define PROCESS(NAME, REGISTER, UNREGISTER, ACTIVATE_LANG) \
     case NAME: { \
       if (record->event.pressed) { \
-        lang_stack[modifiers_count] = lang_should_be; \
-        modifiers_count += 1; \
+        if (modifiers_count < LANG_MODIFIERS_STACK_SIZE) { \
+          lang_stack[modifiers_count] = lang_should_be; \
+          modifiers_count += 1; \
+        } \
         if (lang_should_be == 1) { \
           layer_off(2); \
         } \
@@ -596,12 +606,16 @@ bool lang_shift_process_english_modifiers(Key key, keyrecord_t* record) {
         } \
         REGISTER; \
       } else { \
+        Lang restore_lang = lang_should_be; \
+        if (modifiers_count > 0) { \
+          modifiers_count -= 1; \
+          restore_lang = lang_stack[modifiers_count]; \
+        } \
         UNREGISTER; \
-        modifiers_count -= 1; \
         if (ACTIVATE_LANG) { \
-          lang_activate_from_user(lang_stack[modifiers_count]); \
+          lang_activate_from_user(restore_lang); \
         } else { \
-                  lang_activate_from_user_without_sync(lang_stack[modifiers_count]); \
+                  lang_activate_from_user_without_sync(restore_lang); \
         } \
         if (lang_should_be == 1) { \
           layer_on(2); \

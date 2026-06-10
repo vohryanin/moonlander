@@ -105,7 +105,6 @@ LAYOUT_moonlander( \
 #define CT_S LCTL(KC_S)
 #define CT_F LCTL(KC_F)
 #define CT_A LCTL(KC_A)
-#define CT_S LCTL(KC_S)
 #define CT_F5 LCTL(KC_F5)
 #define CT_PGUP LCTL(KC_PGUP)
 #define CT_PGDN LCTL(KC_PGDN)

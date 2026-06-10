@@ -1,7 +1,7 @@
 #pragma once
 
 #ifndef CUSTOM_SAFE_RANGE
-  #error "You must specify variable CUSTOM_SAFE_RANGE for lang_shift extension."
+  #error "You must specify variable CUSTOM_SAFE_RANGE for tt extension."
 #endif
 
 #define TT_KEYS_COUNT 10
@@ -37,7 +37,9 @@ bool tt_process_record(uint16_t key, keyrecord_t *record) {
 		if (pos != 255) {
 			if (key == tt_previous_key) {
 				if (record->event.pressed) {
-					tt_count += 1;
+					if (tt_count < 255) {
+						tt_count += 1;
+					}
 				}
 			} else {
 				tt_previous_key = key;
