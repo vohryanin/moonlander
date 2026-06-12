@@ -26,4 +26,8 @@ New-Item -ItemType Directory -Force -Path $outDir | Out-Null
   /reference:System.Windows.Forms.dll `
   $sourceFile
 
+if ($LASTEXITCODE -ne 0) {
+  throw "csc.exe failed with exit code $LASTEXITCODE."
+}
+
 Write-Host "Built $outFile"

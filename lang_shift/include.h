@@ -294,6 +294,30 @@ typedef uint16_t Key;
 typedef uint8_t Lang;
 #define NONE_LANG (uint8_t)(255)
 
+#ifndef LANG_ID_EN
+  #define LANG_ID_EN 0
+#endif
+
+#ifndef LANG_ID_RU
+  #define LANG_ID_RU 1
+#endif
+
+#ifndef LANG_LAYER_EN
+  #define LANG_LAYER_EN 0
+#endif
+
+#ifndef LANG_LAYER_EN_SHIFT
+  #define LANG_LAYER_EN_SHIFT 1
+#endif
+
+#ifndef LANG_LAYER_RU
+  #define LANG_LAYER_RU 2
+#endif
+
+#ifndef LANG_LAYER_RU_SHIFT
+  #define LANG_LAYER_RU_SHIFT 3
+#endif
+
 typedef uint8_t Shift;
 #define NONE_SHIFT (uint8_t)(255)
 
@@ -304,6 +328,12 @@ enum LangChange {
   LANG_CHANGE_CTRL_SHIFT,
   LANG_CHANGE_WIN_SPACE,
   LANG_CHANGE_DIRECT
+};
+
+enum LangHostSyncResult {
+  LANG_HOST_SYNC_ACCEPTED,
+  LANG_HOST_SYNC_IGNORED_TEMPORARY,
+  LANG_HOST_SYNC_UNKNOWN_LANG
 };
 
 // Переменная, в которой можно менять текущий способ смены языка
@@ -323,7 +353,7 @@ uint8_t lang_get_shift_layer_number(void);
 void lang_synchronize(Lang lang);
 void lang_activate(Lang lang);
 void lang_activate_from_user(Lang lang);
-void lang_activate_from_host(Lang lang);
+enum LangHostSyncResult lang_activate_from_host(Lang lang);
 
 void lang_shift_press_key(Key key, bool down);
 void lang_shift_tap_key(Key key);

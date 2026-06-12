@@ -662,13 +662,22 @@ void keyboard_post_init_user(void) {
 }
 
 #ifdef RAW_ENABLE
+#define HOST_LANG_SYNC_PACKET_SIZE 32
+
 enum host_lang_sync_command {
   HOST_LANG_SYNC_SET_LAYOUT = 1,
 };
 
 enum host_lang_sync_layout {
-  HOST_LANG_SYNC_EN = 0,
-  HOST_LANG_SYNC_RU = 1,
+  HOST_LANG_SYNC_EN = LANG_ID_EN,
+  HOST_LANG_SYNC_RU = LANG_ID_RU,
+};
+
+enum host_lang_sync_status {
+  HOST_LANG_SYNC_ACCEPTED = 1,
+  HOST_LANG_SYNC_IGNORED_TEMPORARY = 2,
+  HOST_LANG_SYNC_UNKNOWN_COMMAND = 3,
+  HOST_LANG_SYNC_UNKNOWN_LAYOUT = 4,
 };
 
 static bool host_lang_sync_is_packet(uint8_t *data, uint8_t length) {
@@ -680,21 +689,46 @@ static bool host_lang_sync_is_packet(uint8_t *data, uint8_t length) {
          data[4] == 1;
 }
 
+static uint8_t host_lang_sync_status_for_result(enum LangHostSyncResult result) {
+  switch (result) {
+    case LANG_HOST_SYNC_ACCEPTED:
+      return HOST_LANG_SYNC_ACCEPTED;
+    case LANG_HOST_SYNC_IGNORED_TEMPORARY:
+      return HOST_LANG_SYNC_IGNORED_TEMPORARY;
+    case LANG_HOST_SYNC_UNKNOWN_LANG:
+      return HOST_LANG_SYNC_UNKNOWN_LAYOUT;
+  }
+
+  return HOST_LANG_SYNC_UNKNOWN_LAYOUT;
+}
+
+static void host_lang_sync_send_response(uint8_t command, uint8_t layout, uint8_t status) {
+  uint8_t response[HOST_LANG_SYNC_PACKET_SIZE] = {0};
+  response[0] = 'M';
+  response[1] = 'L';
+  response[2] = 'N';
+  response[3] = 'G';
+  response[4] = 1;
+  response[5] = command;
+  response[6] = layout;
+  response[7] = status;
+  response[8] = lang_should_be;
+  response[9] = lang_current;
+  raw_hid_send(response, sizeof(response));
+}
+
 void raw_hid_receive(uint8_t *data, uint8_t length) {
   if (!host_lang_sync_is_packet(data, length)) {
     return;
   }
 
   switch (data[5]) {
-    case HOST_LANG_SYNC_SET_LAYOUT:
-      switch (data[6]) {
-        case HOST_LANG_SYNC_EN:
-          lang_activate_from_host(0);
-          break;
-        case HOST_LANG_SYNC_RU:
-          lang_activate_from_host(1);
-          break;
-      }
+    case HOST_LANG_SYNC_SET_LAYOUT: {
+      enum LangHostSyncResult result = lang_activate_from_host(data[6]);
+      host_lang_sync_send_response(data[5], data[6], host_lang_sync_status_for_result(result));
+    } break;
+    default:
+      host_lang_sync_send_response(data[5], data[6], HOST_LANG_SYNC_UNKNOWN_COMMAND);
       break;
   }
 }

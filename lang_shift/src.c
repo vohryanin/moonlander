@@ -252,8 +252,8 @@ void shift_once_user_timer(void) {
 //                               Работа с языком
 // ---------------------------------------------------------------------------
 
-Lang lang_should_be = 0;
-Lang lang_current = 0;
+Lang lang_should_be = LANG_ID_EN;
+Lang lang_current = LANG_ID_EN;
 uint32_t lang_timer = 0;
 uint8_t lang_pressed_count = 0;
 
@@ -289,16 +289,16 @@ Key lang_get_key(Key key) {
 
 Lang lang_get_lang(Key key) {
   if (EN_GRV <= key && key <= EN_QUES) {
-    return 0;
+    return LANG_ID_EN;
   } else if (RU_JO <= key && key <= RU_COMM) {
-    return 1;
+    return LANG_ID_RU;
   } else {
     return NONE_LANG;
   }
 }
 
 Key lang_calc_agnostic(Key key) {
-  if (lang_current == 0) {
+  if (lang_current == LANG_ID_EN) {
     switch (key) {
       case AG_1:    return EN_1;
       case AG_2:    return EN_2;
@@ -364,7 +364,14 @@ Key lang_calc_agnostic(Key key) {
 }
 
 uint8_t lang_get_shift_layer_number(void) {
-  return lang_should_be * 2 + 1;
+  switch (lang_should_be) {
+    case LANG_ID_EN:
+      return LANG_LAYER_EN_SHIFT;
+    case LANG_ID_RU:
+      return LANG_LAYER_RU_SHIFT;
+    default:
+      return LANG_LAYER_EN_SHIFT;
+  }
 }
 
 static bool lang_sync_release_shift_if_active(void) {
@@ -420,10 +427,10 @@ static void lang_sync_tap_shift_modifier(uint8_t modifier) {
 
 static void lang_sync_direct(Lang lang) {
   switch (lang) {
-    case 0:
+    case LANG_ID_EN:
       lang_sync_tap_ctrl_without_shift(LANG_DIRECT_EN_KEY);
       break;
-    case 1:
+    case LANG_ID_RU:
       lang_sync_tap_ctrl_shift(LANG_DIRECT_RU_KEY);
       break;
   }
@@ -485,20 +492,33 @@ static bool lang_should_ignore_host_sync(Lang lang) {
 	return lang != lang_should_be && timer_read() - lang_timer < LANG_HOST_SYNC_IGNORE_DELAY;
 }
 
-void lang_activate_from_host(Lang lang) {
+static bool lang_is_known(Lang lang) {
+	return lang == LANG_ID_EN || lang == LANG_ID_RU;
+}
+
+static void lang_apply_base_layer(Lang lang) {
+	switch (lang) {
+		case LANG_ID_EN:
+			layer_off(LANG_LAYER_RU);
+			break;
+		case LANG_ID_RU:
+			layer_on(LANG_LAYER_RU);
+			break;
+	}
+}
+
+enum LangHostSyncResult lang_activate_from_host(Lang lang) {
+	if (!lang_is_known(lang)) {
+		return LANG_HOST_SYNC_UNKNOWN_LANG;
+	}
+
 	if (lang_should_ignore_host_sync(lang)) {
-		return;
+		return LANG_HOST_SYNC_IGNORED_TEMPORARY;
 	}
 
 	lang_activate_from_user_without_sync(lang);
-	switch (lang) {
-		case 0:
-			layer_off(2);
-			break;
-		case 1:
-			layer_on(2);
-			break;
-	}
+	lang_apply_base_layer(lang);
+	return LANG_HOST_SYNC_ACCEPTED;
 }
 
 static void lang_activate_from_user_force_if_direct(Lang lang) {
@@ -632,25 +652,25 @@ bool lang_shift_process_custom_keycodes(Key key, keyrecord_t* record) {
       return false;
     case LA_CHNG:
       if (down) {
-        if (lang_should_be == 0) {
-          lang_activate_from_user_force_if_direct(1);
-          layer_on(2);  
+        if (lang_should_be == LANG_ID_EN) {
+          lang_activate_from_user_force_if_direct(LANG_ID_RU);
+          layer_on(LANG_LAYER_RU);
         } else {
-          lang_activate_from_user_force_if_direct(0);
-          layer_off(2);
+          lang_activate_from_user_force_if_direct(LANG_ID_EN);
+          layer_off(LANG_LAYER_RU);
         }
       }
       return false;
     case LA_EN:
       if (down) {
-        lang_activate_from_user_force_if_direct(0);
-        layer_off(2);
+        lang_activate_from_user_force_if_direct(LANG_ID_EN);
+        layer_off(LANG_LAYER_RU);
       }
       return false;
     case LA_RU:
       if (down) {
-        lang_activate_from_user_force_if_direct(1);
-        layer_on(2);
+        lang_activate_from_user_force_if_direct(LANG_ID_RU);
+        layer_on(LANG_LAYER_RU);
       }
       return false;
     case LA_SYNC:
@@ -716,13 +736,13 @@ bool lang_shift_process_english_modifiers(Key key, keyrecord_t* record) {
           lang_stack[modifiers_count] = lang_should_be; \
           modifiers_count += 1; \
         } \
-        if (lang_should_be == 1) { \
-          layer_off(2); \
+        if (lang_should_be == LANG_ID_RU) { \
+          layer_off(LANG_LAYER_RU); \
         } \
         if (ACTIVATE_LANG) { \
-          lang_activate_from_user(0); \
+          lang_activate_from_user(LANG_ID_EN); \
         } else { \
-                  lang_activate_from_user_without_sync(0); \
+                  lang_activate_from_user_without_sync(LANG_ID_EN); \
         } \
         REGISTER; \
       } else { \
@@ -737,8 +757,8 @@ bool lang_shift_process_english_modifiers(Key key, keyrecord_t* record) {
         } else { \
                   lang_activate_from_user_without_sync(restore_lang); \
         } \
-        if (lang_should_be == 1) { \
-          layer_on(2); \
+        if (lang_should_be == LANG_ID_RU) { \
+          layer_on(LANG_LAYER_RU); \
         } \
       } \
       return false; \

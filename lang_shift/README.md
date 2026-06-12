@@ -34,6 +34,17 @@ LANG_CHANGE_DIRECT
 #define LANG_DIRECT_RU_KEY KC_1 // Ctrl+Shift+1
 ```
 
+Слои и идентификаторы языков тоже можно переопределить в `config.h`, если раскладка использует другой порядок слоев:
+
+```c
+#define LANG_ID_EN 0
+#define LANG_ID_RU 1
+#define LANG_LAYER_EN 0
+#define LANG_LAYER_EN_SHIFT 1
+#define LANG_LAYER_RU 2
+#define LANG_LAYER_RU_SHIFT 3
+```
+
 Так же этими вариантами можно задавать способ переключения языка во время работы раскладки, модифицируя переменную `lang_current_change`, либо прямо на раскладке используя кейкоды:
 
 ```c
