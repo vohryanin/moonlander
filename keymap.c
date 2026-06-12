@@ -579,47 +579,30 @@ layer_state_t layer_state_set_user(layer_state_t state) {
   return state;
 }
 
+#define RUN_RECORD_HANDLER(handler) \
+  do { \
+    if (!(handler)(keycode, record)) { \
+      return false; \
+    } \
+  } while (false)
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   initted_for_layer_state = true;
 
-  if (!combo_process_record(keycode, record)) {
-    return false;
-  }
-
-  if (!tt_process_record(keycode, record)) {
-    return false;
-  }
-
-  if (!process_my_lang_keys(keycode, record)) {
-    return false;
-  }
-
-  if (!lang_shift_process_record(keycode, record)) {
-    return false;
-  }
-
-  if (!color_process_record(keycode, record)) {
-    return false;
-  }
-
-  if (!process_my_hotkeys(keycode, record)) {
-    return false;
-  }
-
-  if (!process_moonlander_leds(keycode, record)) {
-    return false;
-  }
-
-  if (!process_mouse_pixel_move(keycode, record)) {
-    return false;
-  }
-
-  if (!process_my_music_keys(keycode, record)) {
-    return false;
-  }
+  RUN_RECORD_HANDLER(combo_process_record);
+  RUN_RECORD_HANDLER(tt_process_record);
+  RUN_RECORD_HANDLER(process_my_lang_keys);
+  RUN_RECORD_HANDLER(lang_shift_process_record);
+  RUN_RECORD_HANDLER(color_process_record);
+  RUN_RECORD_HANDLER(process_my_hotkeys);
+  RUN_RECORD_HANDLER(process_moonlander_leds);
+  RUN_RECORD_HANDLER(process_mouse_pixel_move);
+  RUN_RECORD_HANDLER(process_my_music_keys);
 
   return true;
 }
+
+#undef RUN_RECORD_HANDLER
 
 float error_song1[][2] = SONG(MUSIC_OFF_SOUND);
 void combo_max_count_error(void) {
