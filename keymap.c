@@ -626,13 +626,17 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 float error_song1[][2] = SONG(MUSIC_OFF_SOUND);
 void combo_max_count_error(void) {
   PLAY_SONG(error_song1);
+#ifdef CONSOLE_ENABLE
   uprintf("COMBO ERROR: MAX COMBOS COUNT HAS REACHED\n");
+#endif
 }
 
 float error_song2[][2] = SONG(VOICE_CHANGE_SOUND);
 void combo_max_size_error(void) {
   PLAY_SONG(error_song2); 
+#ifdef CONSOLE_ENABLE
   uprintf("COMBO ERROR: MAX COMBO SIZE HAS REACHED\n");
+#endif
 }
 
 void user_timer(void) {
