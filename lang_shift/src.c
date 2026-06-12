@@ -186,21 +186,26 @@ void shift_user_timer(void) {
 //                          Работа с одиночным шифтом
 // ---------------------------------------------------------------------------
 
-uint8_t shift_once_disable_stage = 2;
+enum ShiftOnceStage {
+  SHIFT_ONCE_DISABLED,
+  SHIFT_ONCE_RELEASE_PENDING,
+  SHIFT_ONCE_ENABLED,
+};
+
+uint8_t shift_once_disable_stage = SHIFT_ONCE_ENABLED;
 uint8_t shift_once_layer_off = 0;
-uint8_t shift_once_layer_current = 0;
 uint32_t shift_once_enabled_time = 0;
 bool shift_once_can_disable = true;
 
 bool shift_once_is_enabled(void) {
-  return shift_once_disable_stage == 2;
+  return shift_once_disable_stage == SHIFT_ONCE_ENABLED;
 }
 
 void shift_once_use_to_next_key(uint8_t layer) {
   if (shift_current == 0) {
     shift_activate_from_user(true);
     layer_on(layer);
-    shift_once_disable_stage = 2;
+    shift_once_disable_stage = SHIFT_ONCE_ENABLED;
     shift_once_layer_off = layer;
     shift_once_enabled_time = timer_read();
   }
@@ -217,22 +222,22 @@ void shift_once_process_key(uint8_t layer, bool down) {
 }
 
 void shift_once_disable(void) {
-  if (shift_once_disable_stage == 2) {
+  if (shift_once_disable_stage == SHIFT_ONCE_ENABLED) {
     layer_off(shift_once_layer_off);
     shift_activate_from_user(false);
-    shift_once_disable_stage = 0;
+    shift_once_disable_stage = SHIFT_ONCE_DISABLED;
   }
 }
 
 void shift_once_process(Key key, keyrecord_t* record) {
   bool down = record->event.pressed;
   
-  if (shift_once_disable_stage == 1) {
-    shift_once_disable_stage = 0;
+  if (shift_once_disable_stage == SHIFT_ONCE_RELEASE_PENDING) {
+    shift_once_disable_stage = SHIFT_ONCE_DISABLED;
     shift_activate_from_user(false);
   }
-  if (down && key != SFT_N_O && shift_once_disable_stage == 2) {
-    shift_once_disable_stage = 1;
+  if (down && key != SFT_N_O && shift_once_disable_stage == SHIFT_ONCE_ENABLED) {
+    shift_once_disable_stage = SHIFT_ONCE_RELEASE_PENDING;
     layer_off(shift_once_layer_off);
   }
 }
@@ -452,6 +457,46 @@ void lang_user_timer(void) {
 // ---------------------------------------------------------------------------
 
 uint8_t lang_shift_current_shift_layer = 0;
+uint8_t lang_shift_pressed_count = 0;
+bool lang_shift_layer_enabled = false;
+
+void lang_shift_enable_shift_layer(uint8_t layer) {
+  lang_shift_current_shift_layer = layer;
+  lang_shift_layer_enabled = true;
+  layer_on(layer);
+}
+
+void lang_shift_disable_shift_layer(void) {
+  if (lang_shift_layer_enabled) {
+    layer_off(lang_shift_current_shift_layer);
+    lang_shift_layer_enabled = false;
+  }
+}
+
+void lang_shift_press_shift(void) {
+  if (lang_shift_pressed_count < 255) {
+    lang_shift_pressed_count++;
+  }
+
+  if (lang_shift_pressed_count == 1) {
+    shift_activate_from_user(true);
+    lang_shift_enable_shift_layer(lang_get_shift_layer_number());
+  }
+}
+
+void lang_shift_release_shift(void) {
+  if (lang_shift_pressed_count > 0) {
+    lang_shift_pressed_count--;
+  }
+
+  if (lang_shift_pressed_count == 0) {
+    shift_should_be = false;
+    if (shift_pressed_count == 0) {
+      shift_activate_from_user(false);
+    }
+    lang_shift_disable_shift_layer();
+  }
+}
 
 void lang_shift_press_key(Key key, bool down) {
   keyrecord_t record = {
@@ -485,15 +530,9 @@ bool lang_shift_process_custom_keycodes(Key key, keyrecord_t* record) {
       return false;
     case SFT_N:
       if (down) {
-        shift_activate_from_user(true);
-        lang_shift_current_shift_layer = lang_get_shift_layer_number();
-        layer_on(lang_shift_current_shift_layer);
+        lang_shift_press_shift();
       } else {
-        shift_should_be = false;
-        if (shift_pressed_count == 0) {
-          shift_activate_from_user(false);
-        }
-        layer_off(lang_shift_current_shift_layer);
+        lang_shift_release_shift();
       }
       return false;
     case LA_CHNG:
