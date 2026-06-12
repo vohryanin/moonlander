@@ -543,34 +543,38 @@ const uint8_t PROGMEM ledmap[][DRIVER_LED_TOTAL] = {
 };
 const uint8_t ledmap_size = MY_ARRAY_SIZE(ledmap);
 
+#define HSV_COLOR(hue, sat, val) { hue, sat, val }
+
 const uint8_t PROGMEM colormap[][3] = {
-  [COLOR_BLACK] = { 0, 0, 0 },
-  [COLOR_ANYFN] = { 0, 0, 255 },
-  [COLOR_PINKY] = { 31, 255, 255 },
-  [COLOR_ANNUL] = { 164, 255, 255 },
-  [COLOR_MIDDL] = { 76, 255, 255 },
-  [COLOR_INDEX] = { 224, 255, 255 },
-  [COLOR_THUMB] = { 8, 255, 255 },
+  [COLOR_BLACK] = HSV_COLOR(0, 0, 0),
+  [COLOR_ANYFN] = HSV_COLOR(0, 0, 255),
+  [COLOR_PINKY] = HSV_COLOR(31, 255, 255),
+  [COLOR_ANNUL] = HSV_COLOR(164, 255, 255),
+  [COLOR_MIDDL] = HSV_COLOR(76, 255, 255),
+  [COLOR_INDEX] = HSV_COLOR(224, 255, 255),
+  [COLOR_THUMB] = HSV_COLOR(8, 255, 255),
 };
 const uint8_t colormap_size = MY_ARRAY_SIZE(colormap);
 
 const uint8_t PROGMEM layermap[][3] = {
-  [LAYER_EN] = { 0, 0, 255 },
-  [LAYER_EN_SHIFT] = { 0, 0, 192 },
+  [LAYER_EN] = HSV_COLOR(0, 0, 255),
+  [LAYER_EN_SHIFT] = HSV_COLOR(0, 0, 192),
 
-  [LAYER_RU] = { 164, 255, 255 },
-  [LAYER_RU_SHIFT] = { 164, 255, 192 },
+  [LAYER_RU] = HSV_COLOR(164, 255, 255),
+  [LAYER_RU_SHIFT] = HSV_COLOR(164, 255, 192),
 
-  [LAYER_RED] = { 0, 255, 210 },
-  [LAYER_GREEN] = { 76, 255, 255 },
-  [LAYER_GAME] = { 228, 255, 255 },
+  [LAYER_RED] = HSV_COLOR(0, 255, 210),
+  [LAYER_GREEN] = HSV_COLOR(76, 255, 255),
+  [LAYER_GAME] = HSV_COLOR(228, 255, 255),
 
-  [LAYER_PURPLE] = { 188, 255, 255 },
-  [LAYER_YELLOW] = { 35, 255, 255 },
+  [LAYER_PURPLE] = HSV_COLOR(188, 255, 255),
+  [LAYER_YELLOW] = HSV_COLOR(35, 255, 255),
 
-  [LAYER_ORANGE] = { 8, 255, 255 },
+  [LAYER_ORANGE] = HSV_COLOR(8, 255, 255),
 };
 const uint8_t layermap_size = MY_ARRAY_SIZE(layermap);
+
+#undef HSV_COLOR
 
 bool initted_for_layer_state = false;
 layer_state_t layer_state_set_user(layer_state_t state) {
