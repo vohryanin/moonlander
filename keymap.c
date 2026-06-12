@@ -472,13 +472,9 @@ const ComboWithKeycode combos[] PROGMEM = {
 };
 const uint8_t combos_size = MY_ARRAY_SIZE(combos);
 
-#define TT_LAYER(tt_keycode, layer) { \
-  [TT_FIELD_KEYCODE] = tt_keycode, \
-  [TT_FIELD_HOLD] = MO(layer), \
-  [TT_FIELD_TOGGLE] = TG(layer), \
-}
+#define TT_LAYER(tt_keycode, layer) { tt_keycode, MO(layer), TG(layer) }
 
-const uint16_t tt_keys[][TT_FIELD_COUNT] = {
+const uint16_t tt_keys[][3] = {
   TT_LAYER(TT_004, LAYER_RED),
   TT_LAYER(TT_005, LAYER_GREEN),
   TT_LAYER(TT_006, LAYER_GAME),
@@ -584,7 +580,12 @@ bool initted_for_layer_state = false;
 layer_state_t layer_state_set_user(layer_state_t state) {
   if (initted_for_layer_state) {
     // Выключаем все леды, потому что они только просвечивают своим некрасивым цветом через прозрачные кейкапы, а для чего их использовать можно я не придумал
-    moonlander_leds_set_all(false);
+    ML_LED_1(false);
+    ML_LED_2(false);
+    ML_LED_3(false);
+    ML_LED_4(false);
+    ML_LED_5(false);
+    ML_LED_6(false);
 
     uint8_t layer = get_highest_layer(state);
 
