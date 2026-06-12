@@ -472,15 +472,19 @@ const ComboWithKeycode combos[] PROGMEM = {
 };
 const uint8_t combos_size = MY_ARRAY_SIZE(combos);
 
+#define TT_LAYER(tt_keycode, layer) { tt_keycode, MO(layer), TG(layer) }
+
 const uint16_t tt_keys[][3] = {
-  { TT_004, MO(LAYER_RED), TG(LAYER_RED) },
-  { TT_005, MO(LAYER_GREEN), TG(LAYER_GREEN) },
-  { TT_006, MO(LAYER_GAME), TG(LAYER_GAME) },
-  { TT_007, MO(LAYER_PURPLE), TG(LAYER_PURPLE) },
-  { TT_008, MO(LAYER_YELLOW), TG(LAYER_YELLOW) },
-  { TT_009, MO(LAYER_ORANGE), TG(LAYER_ORANGE) },
+  TT_LAYER(TT_004, LAYER_RED),
+  TT_LAYER(TT_005, LAYER_GREEN),
+  TT_LAYER(TT_006, LAYER_GAME),
+  TT_LAYER(TT_007, LAYER_PURPLE),
+  TT_LAYER(TT_008, LAYER_YELLOW),
+  TT_LAYER(TT_009, LAYER_ORANGE),
 };
 const uint8_t tt_size = MY_ARRAY_SIZE(tt_keys);
+
+#undef TT_LAYER
 
 enum ledmap_colors {
   COLOR_BLACK = COLOR_SAFE_RANGE, // Чёрный цвет
