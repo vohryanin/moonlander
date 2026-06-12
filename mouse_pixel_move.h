@@ -23,9 +23,46 @@ enum mouse_pixel_move_keycodes {
 };
 
 enum mouse_pixel_move_config {
+  MOUSE_PIXEL_MOVE_DIRECTION_COUNT = 4,
   MOUSE_PIXEL_MOVE_SMALL_STEP = 1,
   MOUSE_PIXEL_MOVE_LARGE_STEP = 10,
 };
+
+enum mouse_pixel_move_direction {
+  MOUSE_PIXEL_MOVE_DOWN,
+  MOUSE_PIXEL_MOVE_UP,
+  MOUSE_PIXEL_MOVE_LEFT,
+  MOUSE_PIXEL_MOVE_RIGHT,
+};
+
+static bool mouse_pixel_move_is_key(uint16_t keycode) {
+  return MS_DN_1 <= keycode && keycode <= MS_RG10;
+}
+
+static bool mouse_pixel_move_is_vertical(uint8_t direction) {
+  return direction == MOUSE_PIXEL_MOVE_DOWN || direction == MOUSE_PIXEL_MOVE_UP;
+}
+
+static bool mouse_pixel_move_is_negative(uint8_t direction) {
+  return direction == MOUSE_PIXEL_MOVE_UP || direction == MOUSE_PIXEL_MOVE_LEFT;
+}
+
+static report_mouse_t mouse_pixel_move_report(uint16_t keycode) {
+  uint8_t offset = keycode - MS_DN_1;
+  uint8_t direction = offset % MOUSE_PIXEL_MOVE_DIRECTION_COUNT;
+  int8_t step = offset < MOUSE_PIXEL_MOVE_DIRECTION_COUNT
+    ? MOUSE_PIXEL_MOVE_SMALL_STEP
+    : MOUSE_PIXEL_MOVE_LARGE_STEP;
+  int8_t delta = mouse_pixel_move_is_negative(direction) ? -step : step;
+
+  report_mouse_t report = {};
+  if (mouse_pixel_move_is_vertical(direction)) {
+    report.y = delta;
+  } else {
+    report.x = delta;
+  }
+  return report;
+}
 
 static void mouse_pixel_move_send(int8_t x, int8_t y) {
   report_mouse_t report = {};
@@ -34,25 +71,14 @@ static void mouse_pixel_move_send(int8_t x, int8_t y) {
   host_mouse_send(&report);
 }
 
-static bool mouse_pixel_move_process(keyrecord_t *record, int8_t x, int8_t y) {
+bool process_mouse_pixel_move(uint16_t keycode, keyrecord_t *record) {
+  if (!mouse_pixel_move_is_key(keycode)) {
+    return true;
+  }
+
   if (record->event.pressed) {
-    mouse_pixel_move_send(x, y);
+    report_mouse_t report = mouse_pixel_move_report(keycode);
+    mouse_pixel_move_send(report.x, report.y);
   }
   return false;
-}
-
-bool process_mouse_pixel_move(uint16_t keycode, keyrecord_t *record) {
-  switch (keycode) {
-    case MS_DN_1: return mouse_pixel_move_process(record, 0, MOUSE_PIXEL_MOVE_SMALL_STEP);
-    case MS_UP_1: return mouse_pixel_move_process(record, 0, -MOUSE_PIXEL_MOVE_SMALL_STEP);
-    case MS_LF_1: return mouse_pixel_move_process(record, -MOUSE_PIXEL_MOVE_SMALL_STEP, 0);
-    case MS_RG_1: return mouse_pixel_move_process(record, MOUSE_PIXEL_MOVE_SMALL_STEP, 0);
-
-    case MS_DN10: return mouse_pixel_move_process(record, 0, MOUSE_PIXEL_MOVE_LARGE_STEP);
-    case MS_UP10: return mouse_pixel_move_process(record, 0, -MOUSE_PIXEL_MOVE_LARGE_STEP);
-    case MS_LF10: return mouse_pixel_move_process(record, -MOUSE_PIXEL_MOVE_LARGE_STEP, 0);
-    case MS_RG10: return mouse_pixel_move_process(record, MOUSE_PIXEL_MOVE_LARGE_STEP, 0);
-  }
-
-  return true;
 }
