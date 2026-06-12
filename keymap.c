@@ -583,20 +583,72 @@ const uint8_t layermap_size = MY_ARRAY_SIZE(layermap);
 
 #undef HSV_COLOR
 
+#ifndef LIGHTING_IDLE_TIMEOUT
+#define LIGHTING_IDLE_TIMEOUT 300000
+#endif
+
 bool initted_for_layer_state = false;
+
+static uint32_t lighting_idle_timer = 0;
+static bool lighting_idle_sleeping = false;
+static bool lighting_idle_restore_rgb = false;
+
+static void apply_layer_color(layer_state_t state) {
+  uint8_t layer = get_highest_layer(state);
+  if (layer >= layermap_size) {
+    return;
+  }
+
+  // Устанавливаем текущий цвет клавиатуры таким же какой сейчас цвет у слоя. Это создаёт красивый эффект для подсветок, которые используют текущий цвет.
+  rgb_matrix_sethsv_noeeprom(
+    pgm_read_byte(&layermap[layer][0]),
+    pgm_read_byte(&layermap[layer][1]),
+    pgm_read_byte(&layermap[layer][2])
+  );
+}
+
+static void lighting_idle_sleep(void) {
+  if (lighting_idle_sleeping) {
+    return;
+  }
+
+  lighting_idle_sleeping = true;
+  lighting_idle_restore_rgb = rgb_matrix_is_enabled();
+  moonlander_leds_set_all(false);
+
+  if (lighting_idle_restore_rgb) {
+    rgb_matrix_set_color_all(0, 0, 0);
+    rgb_matrix_disable_noeeprom();
+  }
+}
+
+static void lighting_idle_wake(void) {
+  lighting_idle_timer = timer_read32();
+  if (!lighting_idle_sleeping) {
+    return;
+  }
+
+  lighting_idle_sleeping = false;
+  if (lighting_idle_restore_rgb) {
+    rgb_matrix_enable_noeeprom();
+    apply_layer_color(layer_state);
+  }
+  lighting_idle_restore_rgb = false;
+}
+
+static void lighting_idle_user_timer(void) {
+  if (LIGHTING_IDLE_TIMEOUT > 0 && !lighting_idle_sleeping && timer_elapsed32(lighting_idle_timer) >= LIGHTING_IDLE_TIMEOUT) {
+    lighting_idle_sleep();
+  }
+}
+
 layer_state_t layer_state_set_user(layer_state_t state) {
   if (initted_for_layer_state) {
     // Выключаем все леды, потому что они только просвечивают своим некрасивым цветом через прозрачные кейкапы, а для чего их использовать можно я не придумал
     moonlander_leds_set_all(false);
-
-    uint8_t layer = get_highest_layer(state);
-
-    // Устанавливаем текущий цвет клавиатуры таким же какой сейчас цвет у слоя. Это создаёт красивый эффект для подсветок, которые используют текущий цвет.
-    rgb_matrix_sethsv_noeeprom(
-      pgm_read_byte(&layermap[layer][0]),
-      pgm_read_byte(&layermap[layer][1]),
-      pgm_read_byte(&layermap[layer][2])
-    );
+    if (!lighting_idle_sleeping) {
+      apply_layer_color(state);
+    }
   }
 
   return state;
@@ -611,6 +663,7 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   initted_for_layer_state = true;
+  lighting_idle_wake();
 
   RUN_RECORD_HANDLER(combo_process_record);
   RUN_RECORD_HANDLER(tt_process_record);
@@ -646,6 +699,7 @@ void combo_max_size_error(void) {
 void user_timer(void) {
   combo_user_timer();
   lang_shift_user_timer();
+  lighting_idle_user_timer();
 }
 
 void matrix_scan_user(void) {
@@ -659,6 +713,7 @@ void rgb_matrix_indicators_user(void) {
 
 void keyboard_post_init_user(void) {
   rgb_matrix_enable();
+  lighting_idle_timer = timer_read32();
 }
 
 #ifdef RAW_ENABLE
