@@ -1,39 +1,66 @@
 extern bool g_suspend_state;
 extern rgb_config_t rgb_matrix_config;
 
-void set_layer_color(int layer) {
-  if (layer < 0 || layer >= ledmap_size) {
+static HSV color_make_hsv(uint8_t hue, uint8_t sat, uint8_t val) {
+  HSV hsv;
+  hsv.h = hue;
+  hsv.s = sat;
+  hsv.v = val;
+  return hsv;
+}
+
+static HSV color_black_hsv(void) {
+  return color_make_hsv(0, 0, 0);
+}
+
+static HSV color_read_colormap_hsv(uint8_t color) {
+  return color_make_hsv(
+    pgm_read_byte(&colormap[color][0]),
+    pgm_read_byte(&colormap[color][1]),
+    pgm_read_byte(&colormap[color][2])
+  );
+}
+
+static HSV color_read_layermap_hsv(uint8_t layer) {
+  return color_make_hsv(
+    pgm_read_byte(&layermap[layer][0]),
+    pgm_read_byte(&layermap[layer][1]),
+    pgm_read_byte(&layermap[layer][2])
+  );
+}
+
+static HSV color_current_layer_hsv(void) {
+  uint8_t layer = biton32(layer_state);
+  if (layer < layermap_size) {
+    return color_read_layermap_hsv(layer);
+  }
+  return color_black_hsv();
+}
+
+static HSV color_led_hsv(uint8_t color) {
+  if (color == COLOR_LAYER) {
+    return color_current_layer_hsv();
+  }
+
+  if (color < colormap_size) {
+    return color_read_colormap_hsv(color);
+  }
+
+  return color_black_hsv();
+}
+
+void set_layer_color(int picture) {
+  if (picture < 0 || picture >= ledmap_size) {
     return;
   }
 
-  #define SET_COLOR(H, S, V) hsv.h = H; hsv.s = S; hsv.v = V;
-
   for (int i = 0; i < DRIVER_LED_TOTAL; i++) {
-    uint8_t color = pgm_read_byte(&ledmap[layer][i]);
-    HSV hsv;
-
-    if (color == COLOR_TRANS) { continue; } else
-    if (color == COLOR_LAYER) {
-      uint8_t layer = biton32(layer_state);
-      if (layer < layermap_size) {
-        SET_COLOR(
-          pgm_read_byte(&layermap[layer][0]),
-          pgm_read_byte(&layermap[layer][1]),
-          pgm_read_byte(&layermap[layer][2])
-        );
-      } else {
-        SET_COLOR(0, 0, 0);
-      }
-    } else if (color < colormap_size) {
-      SET_COLOR(
-        pgm_read_byte(&colormap[color][0]),
-        pgm_read_byte(&colormap[color][1]),
-        pgm_read_byte(&colormap[color][2])
-      );
-    } else {
-      SET_COLOR(0, 0, 0);
+    uint8_t color = pgm_read_byte(&ledmap[picture][i]);
+    if (color == COLOR_TRANS) {
+      continue;
     }
 
+    HSV hsv = color_led_hsv(color);
     RGB rgb = hsv_to_rgb(hsv);
     float f = (float)rgb_matrix_config.hsv.v / UINT8_MAX;
     rgb_matrix_set_color(i, f * rgb.r, f * rgb.g, f * rgb.b);

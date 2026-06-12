@@ -31,30 +31,30 @@ float my_song4[][2] = SONG(VIOLIN_SOUND);
 float my_song5[][2] = SONG(GUITAR_SOUND);
 float my_song6[][2] = SONG(CHROMATIC_SOUND);
 
+static bool music_keycode_disabled = false;
+
+static void music_press_arbitrary_keycode(uint16_t keycode, bool down) {
+  music_keycode_disabled = true;
+  press_arbitrary_keycode(keycode, down);
+  music_keycode_disabled = false;
+}
+
 // Эта функция должна находиться самой последней по приоритету
 bool process_my_music_keys(uint16_t keycode, keyrecord_t *record) {
   // https://github.com/qmk/qmk_firmware/blob/master/quantum/audio/song_list.h
   // https://docs.qmk.fm/#/feature_audio
 
-  static bool disable_music = false;
-
-  if (disable_music)
+  if (music_keycode_disabled) {
     return true;
+  }
 
   #define MUSIC_KEYCODE(FROM, TO, SONG) \
     case FROM: \
       if (record->event.pressed) { \
         PLAY_SONG(SONG); \
-        disable_music = true; \
-        press_arbitrary_keycode(TO, true); \
-        disable_music = false; \
-      } else { \
-        disable_music = true; \
-        press_arbitrary_keycode(TO, false); \
-        disable_music = false; \
       } \
-      return false; \
-      break;
+      music_press_arbitrary_keycode(TO, record->event.pressed); \
+      return false;
 
   switch (keycode) {
     MUSIC_KEYCODE(MU_LANG, LA_CHNG, my_song1)
@@ -68,13 +68,15 @@ bool process_my_music_keys(uint16_t keycode, keyrecord_t *record) {
     MUSIC_KEYCODE(MU_SCR, KC_PSCR, my_song3)
     MUSIC_KEYCODE(MU_WNL, WN_L, my_song3)
 
-    case TG(4):
-    case TG(5):
-    case TG(6):
-    case TG(7):
-    case TG(8):
-    MUSIC_KEYCODE(TG(9), keycode, my_song6)
+    case TG(LAYER_RED):
+    case TG(LAYER_GREEN):
+    case TG(LAYER_GAME):
+    case TG(LAYER_PURPLE):
+    case TG(LAYER_YELLOW):
+    MUSIC_KEYCODE(TG(LAYER_ORANGE), keycode, my_song6)
   }
+
+  #undef MUSIC_KEYCODE
 
   return true;
 }
