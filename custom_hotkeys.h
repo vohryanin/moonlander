@@ -26,26 +26,65 @@ enum custom_hotkeys_keycodes {
   #define CUSTOM_SAFE_RANGE CUSTOM_HOTKEYS_NEW_SAFE_RANGE
 };
 
-// Мои языко-символьные клавиши
+// Helpers for modifier hotkeys.
+static void tap_with_mod(uint8_t mod, uint8_t key) {
+  register_code(mod);
+  tap_code(key);
+  unregister_code(mod);
+}
+
+static void tap_with_mods(uint8_t mod1, uint8_t mod2, uint8_t key) {
+  register_code(mod1);
+  register_code(mod2);
+  tap_code(key);
+  unregister_code(mod2);
+  unregister_code(mod1);
+}
+
+static void tap_ctrl(uint8_t key) {
+  tap_with_mod(KC_LCTRL, key);
+}
+
+static void tap_ctrl_shift(uint8_t key) {
+  tap_with_mods(KC_LCTRL, KC_LSHIFT, key);
+}
+
+static void tap_gui_shift(uint8_t key) {
+  tap_with_mods(KC_LGUI, KC_LSHIFT, key);
+}
+
+static void tap_ctrl_sequence(uint8_t first_key, uint8_t second_key) {
+  register_code(KC_LCTRL);
+  tap_code(first_key);
+  tap_code(second_key);
+  unregister_code(KC_LCTRL);
+}
+
+static void hold_ctrl(uint8_t key, bool down) {
+  if (down) {
+    register_code(KC_LCTRL);
+    register_code(key);
+  } else {
+    unregister_code(key);
+    unregister_code(KC_LCTRL);
+  }
+}
+
+// Custom hotkey processing.
 bool process_my_hotkeys(uint16_t keycode, keyrecord_t *record) {
   switch (keycode) {
     case KG_NEXT:
       if (record->event.pressed) {
         tap_code(KC_TAB);
         tap_code(KC_TAB);
-        register_code(KC_LCTRL);
-        tap_code(KC_RGHT);
-        unregister_code(KC_LCTRL);
+        tap_ctrl(KC_RGHT);
       }    
       return false;
       break;
     case F6_CT_C:
       if (record->event.pressed) {
         tap_code(KC_F6);
-
-        register_code(KC_LCTL);
-          tap_code(KC_C);
-        unregister_code(KC_LCTL);
+        tap_ctrl(KC_C);
       }
       return false;
       break;
@@ -53,19 +92,11 @@ bool process_my_hotkeys(uint16_t keycode, keyrecord_t *record) {
       if (record->event.pressed) {
         switch (lang_current_change) {
           case LANG_CHANGE_CAPS: {
-            register_code(KC_LCTRL);
-            register_code(KC_LSHIFT);
-            tap_code(KC_PSCR);
-            unregister_code(KC_LSHIFT);
-            unregister_code(KC_LCTRL);
+            tap_ctrl_shift(KC_PSCR);
           } break;
           case LANG_CHANGE_ALT_SHIFT:
           case LANG_CHANGE_CTRL_SHIFT: {
-            register_code(KC_LGUI);
-              register_code(KC_LSHIFT);
-              tap_code(KC_S);
-              unregister_code(KC_LSHIFT);
-              unregister_code(KC_LGUI);
+            tap_gui_shift(KC_S);
           } break;
           case LANG_CHANGE_WIN_SPACE: {
             // No screenshot, maybe it android
@@ -77,78 +108,59 @@ bool process_my_hotkeys(uint16_t keycode, keyrecord_t *record) {
     case CT_A_C:
       if (record->event.pressed) {
         shift_activate(0);
-        register_code(KC_LCTRL);
-        tap_code(KC_A);
-        tap_code(KC_C);
-        unregister_code(KC_LCTRL);
+        tap_ctrl_sequence(KC_A, KC_C);
       }
       return false;
     case CT_A_V:
       if (record->event.pressed) {
         shift_activate(0);
-        register_code(KC_LCTRL);
-        tap_code(KC_A);
-        tap_code(KC_V);
-        unregister_code(KC_LCTRL);
+        tap_ctrl_sequence(KC_A, KC_V);
       }
       return false;
     case CT_A_X:
       if (record->event.pressed) {
         shift_activate(0);
-        register_code(KC_LCTRL);
-        tap_code(KC_A);
-        tap_code(KC_X);
-        unregister_code(KC_LCTRL);
+        tap_ctrl_sequence(KC_A, KC_X);
       }
       return false;
     case CT_D:
       if (record->event.pressed) {
         lang_activate(0);
-        register_code(KC_LCTRL);
-        register_code(KC_D);
+        hold_ctrl(KC_D, true);
       } else {
-        unregister_code(KC_D);
-        unregister_code(KC_LCTRL);
+        hold_ctrl(KC_D, false);
       }
       return false;
     case CT_Y:
       if (record->event.pressed) {
         shift_activate(0);
-        register_code(KC_LCTRL);
-        register_code(KC_Y);
+        hold_ctrl(KC_Y, true);
       } else {
-        unregister_code(KC_Y);
-        unregister_code(KC_LCTRL);
+        hold_ctrl(KC_Y, false);
       }
       return false;
     case CT_Z:
       if (record->event.pressed) {
         shift_activate(0);
-        register_code(KC_LCTRL);
-        register_code(KC_Z);
+        hold_ctrl(KC_Z, true);
       } else {
-        unregister_code(KC_Z);
-        unregister_code(KC_LCTRL);
+        hold_ctrl(KC_Z, false);
       }
       return false;
     case CT_SLSH:
       if (record->event.pressed) {
         lang_activate(0);
-        register_code(KC_LCTRL);
-        register_code(KC_SLSH);
+        hold_ctrl(KC_SLSH, true);
       } else {
-        unregister_code(KC_SLSH);
-        unregister_code(KC_LCTRL);
+        hold_ctrl(KC_SLSH, false);
       }
       return false;
     case CT_RBRC:
       if (record->event.pressed) {
         lang_activate(0);
-        register_code(KC_LCTRL);
-        register_code(KC_RBRC);
+        hold_ctrl(KC_RBRC, true);
       } else {
-        unregister_code(KC_RBRC);
-        unregister_code(KC_LCTRL);
+        hold_ctrl(KC_RBRC, false);
       }
       return false;
   }
