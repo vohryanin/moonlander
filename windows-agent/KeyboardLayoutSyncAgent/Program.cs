@@ -27,9 +27,12 @@ namespace KeyboardLayoutSyncAgent
 
     internal sealed class TrayAppContext : ApplicationContext
     {
+        private const int ForceResendIntervalMs = 1500;
+
         private readonly NotifyIcon notifyIcon;
         private readonly Timer timer;
         private KeyboardLayoutKind? lastSentLayout;
+        private DateTime lastSentAt = DateTime.MinValue;
 
         public TrayAppContext()
         {
@@ -72,7 +75,10 @@ namespace KeyboardLayoutSyncAgent
                 return;
             }
 
-            if (!force && lastSentLayout.HasValue && lastSentLayout.Value == layout)
+            if (!force &&
+                lastSentLayout.HasValue &&
+                lastSentLayout.Value == layout &&
+                (DateTime.UtcNow - lastSentAt).TotalMilliseconds < ForceResendIntervalMs)
             {
                 return;
             }
@@ -81,6 +87,7 @@ namespace KeyboardLayoutSyncAgent
             if (sentCount > 0)
             {
                 lastSentLayout = layout;
+                lastSentAt = DateTime.UtcNow;
                 SetTrayText("Keyboard layout sync: " + LayoutName(layout));
             }
             else

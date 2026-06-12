@@ -269,6 +269,10 @@ uint8_t lang_pressed_count = 0;
   #define LANG_DIRECT_RU_KEY KC_1
 #endif
 
+#ifndef LANG_HOST_SYNC_IGNORE_DELAY
+  #define LANG_HOST_SYNC_IGNORE_DELAY 600
+#endif
+
 #ifndef LANG_MODIFIERS_STACK_SIZE
   #define LANG_MODIFIERS_STACK_SIZE 8
 #endif
@@ -473,7 +477,19 @@ void lang_activate_from_user_without_sync(Lang lang) {
 	lang_current = lang;
 }
 
+static bool lang_should_ignore_host_sync(Lang lang) {
+	if (lang_current != lang_should_be || lang_pressed_count > 0) {
+		return true;
+	}
+
+	return lang != lang_should_be && timer_read() - lang_timer < LANG_HOST_SYNC_IGNORE_DELAY;
+}
+
 void lang_activate_from_host(Lang lang) {
+	if (lang_should_ignore_host_sync(lang)) {
+		return;
+	}
+
 	lang_activate_from_user_without_sync(lang);
 	switch (lang) {
 		case 0:
