@@ -257,6 +257,10 @@ Lang lang_current = 0;
 uint32_t lang_timer = 0;
 uint8_t lang_pressed_count = 0;
 
+#ifndef LANG_SYNC_DELAY
+  #define LANG_SYNC_DELAY 30
+#endif
+
 #ifndef LANG_MODIFIERS_STACK_SIZE
   #define LANG_MODIFIERS_STACK_SIZE 8
 #endif
@@ -387,9 +391,16 @@ void lang_synchronize(void) {
       }
     } break;
     case LANG_CHANGE_WIN_SPACE: {
+      bool restore_shift = shift_current == 1;
+      if (restore_shift) {
+        unregister_code(KC_LSHIFT);
+      }
       register_code(KC_LGUI);
       tap_code(KC_SPACE);
       unregister_code(KC_LGUI);
+      if (restore_shift) {
+        register_code(KC_LSHIFT);
+      }
     } break;
   }
 }
@@ -398,6 +409,7 @@ void lang_activate(Lang lang) {
 	// Нужно дополнять этот код, если нужно три языка и более
 	if (lang_current != lang) {
 		lang_synchronize();
+		wait_ms(LANG_SYNC_DELAY);
 	}
 	lang_current = lang;
 }
