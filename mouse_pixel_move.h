@@ -22,27 +22,50 @@ enum mouse_pixel_move_keycodes {
   #define CUSTOM_SAFE_RANGE MOUSE_PIXEL_MOVE_NEW_SAFE_RANGE
 };
 
-// Мои языко-символьные клавиши
+enum mouse_pixel_move_config {
+  MOUSE_PIXEL_MOVE_DIRECTION_COUNT = 4,
+  MOUSE_PIXEL_MOVE_SMALL_STEP = 1,
+  MOUSE_PIXEL_MOVE_LARGE_STEP = 10,
+};
+
+enum mouse_pixel_move_direction {
+  MOUSE_PIXEL_MOVE_DOWN,
+  MOUSE_PIXEL_MOVE_UP,
+  MOUSE_PIXEL_MOVE_LEFT,
+  MOUSE_PIXEL_MOVE_RIGHT,
+};
+
+static bool mouse_pixel_move_is_key(uint16_t keycode) {
+  return MS_DN_1 <= keycode && keycode <= MS_RG10;
+}
+
+static report_mouse_t mouse_pixel_move_report(uint16_t keycode) {
+  uint8_t offset = keycode - MS_DN_1;
+  uint8_t direction = offset % MOUSE_PIXEL_MOVE_DIRECTION_COUNT;
+  int8_t step = offset < MOUSE_PIXEL_MOVE_DIRECTION_COUNT
+    ? MOUSE_PIXEL_MOVE_SMALL_STEP
+    : MOUSE_PIXEL_MOVE_LARGE_STEP;
+
+  report_mouse_t report = {};
+  switch (direction) {
+    case MOUSE_PIXEL_MOVE_DOWN: report.y = step; break;
+    case MOUSE_PIXEL_MOVE_UP: report.y = -step; break;
+    case MOUSE_PIXEL_MOVE_LEFT: report.x = -step; break;
+    case MOUSE_PIXEL_MOVE_RIGHT: report.x = step; break;
+  }
+  return report;
+}
+
 bool process_mouse_pixel_move(uint16_t keycode, keyrecord_t *record) {
-  if (!(MOUSE_PIXEL_MOVE_START < keycode && keycode < MOUSE_PIXEL_MOVE_NEW_SAFE_RANGE)) {
+  if (!mouse_pixel_move_is_key(keycode)) {
     return true;
   }
 
-  if (!record->event.pressed)
+  if (!record->event.pressed) {
     return false;
-
-  report_mouse_t currentReport = {};
-  switch (keycode) {
-    case MS_DN_1: currentReport.y = 1; break;
-    case MS_UP_1: currentReport.y = -1; break;
-    case MS_LF_1: currentReport.x = -1; break;
-    case MS_RG_1: currentReport.x = 1; break;
-
-    case MS_DN10: currentReport.y = 10; break;
-    case MS_UP10: currentReport.y = -10; break;
-    case MS_LF10: currentReport.x = -10; break;
-    case MS_RG10: currentReport.x = 10; break;
   }
-  host_mouse_send(&currentReport);
+
+  report_mouse_t report = mouse_pixel_move_report(keycode);
+  host_mouse_send(&report);
   return false;
 }
