@@ -22,6 +22,19 @@ enum custom_keycodes {
 
 #define MY_ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 
+enum keyboard_layers {
+  LAYER_EN = 0,
+  LAYER_EN_SHIFT,
+  LAYER_RU,
+  LAYER_RU_SHIFT,
+  LAYER_RED,
+  LAYER_GREEN,
+  LAYER_GAME,
+  LAYER_PURPLE,
+  LAYER_YELLOW,
+  LAYER_ORANGE,
+};
+
 #define MY_layout( \
     k00, k01, k02, k03, k04, k05, k06, \
     k10, k11, k12, k13, k14, k15, k16, \
@@ -171,7 +184,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   //---------------------------------------------------------------------------
   //английская без шифта
   // TODO надо разобраться, куда поместить AC_CIRC, AC_GRV, AC_ACT, сделать их независящими от текущей раскладки
-  [0] = MY_layout(
+  [LAYER_EN] = MY_layout(
     // LEFT HALF
     KC_ESC,  EN_PLUS, EN_SCLN, EN_GRV,  EN_COLN, EN_EQL,  EN_AT,
     EN_UNDS, EN_Q,  EN_W,    EN_E,    EN_R,    EN_T,  CMB_CTC,
@@ -193,7 +206,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   //---------------------------------------------------------------------------
   //английская с зажатым шифтом
-  [1] = MY_layout(
+  [LAYER_EN_SHIFT] = MY_layout(
     // LEFT HALF
     _______, EN_7,    EN_5,    EN_3,    EN_1,    EN_9,    EN_CIRC,
     _______, EN_S_Q,  EN_S_W,  EN_S_E,  EN_S_R,  EN_S_T,  CMB_CAC,
@@ -215,7 +228,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   //---------------------------------------------------------------------------
   //русская без шифта
-  [2] = MY_layout(
+  [LAYER_RU] = MY_layout(
     // LEFT HALF
     _______, RU_PLUS, RU_SCLN, EN_GRV,  RU_COLN, RU_EQL,  EN_AT,
     RU_UNDS, RU_J,    RU_TS,   RU_U,    RU_K,    RU_JE,   CMB_CTC,
@@ -237,7 +250,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   //---------------------------------------------------------------------------
   //русская с шифтом
-  [3] = MY_layout(
+  [LAYER_RU_SHIFT] = MY_layout(
     // LEFT HALF
     _______, RU_7,    RU_5,    RU_3,    RU_1,    RU_9,    EN_CIRC,
     _______, RU_S_J,  RU_S_TS, RU_S_U,  RU_S_K,  RU_S_JE, CMB_CAC,
@@ -259,9 +272,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   //---------------------------------------------------------------------------
   //красный слой
-  [4] = MY_layout(
+  [LAYER_RED] = MY_layout(
     // LEFT HALF
-    TG(4),   KC_F7,   KC_F5,   KC_F3,   KC_F1,   KC_F9,   KC_F11,
+    TG(LAYER_RED), KC_F7,   KC_F5,   KC_F3,   KC_F1,   KC_F9,   KC_F11,
     CT_G,    KC_HOME, KC_PGDN, KC_PGUP, KC_END,  CT_J,    CT_INS,
     CS_M,    KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, CS_K,    SH_INS,
     _______, CT_LEFT, CT_DOWN, CT_UP,   CT_RGHT, CT_F,
@@ -281,9 +294,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   //---------------------------------------------------------------------------
   //зеленый слой
-  [5] = MY_layout(
+  [LAYER_GREEN] = MY_layout(
     // LEFT HALF
-    TG(5),   _______, _______, _______, _______,  _______,  _______,
+    TG(LAYER_GREEN), _______, _______, _______, _______,  _______,  _______,
     KC_MUTE, KC_F5,   CS_T,    CT_T,    CT_W,     F6_CT_C,  _______,
     KC_VOLU, KC_MPRV, KC_MNXT, CT_PGUP, CT_PGDN,  KC_MPLY,  _______,
     KC_VOLD, CT_F5,   CS_P,    CT_1,    CT_2,     AL_PSCR,
@@ -303,7 +316,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   //---------------------------------------------------------------------------
   // Малиновый слой (Слой для игр)
-  [6] = MY_layout(
+  [LAYER_GAME] = MY_layout(
     // LEFT HALF
     KC_ESC,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,
     KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_7,
@@ -314,7 +327,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_SPC,  KC_LALT, KC_ENT, // LEFT THUMB KEYS
 
     // RIGHT HALF
-    XXXXXXX, KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    TG(6),
+    XXXXXXX, KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    TG(LAYER_GAME),
     XXXXXXX, KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    XXXXXXX,
     XXXXXXX, KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, XXXXXXX,
              KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, XXXXXXX,
@@ -325,9 +338,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   //---------------------------------------------------------------------------
   // Фиолетовый слой
-  [7] = MY_layout(
+  [LAYER_PURPLE] = MY_layout(
     // LEFT HALF
-    TG(7),   _______, _______, _______, _______, _______, _______,
+    TG(LAYER_PURPLE), _______, _______, _______, _______, _______, _______,
     AL_UP,   WN_8,    WN_7,    WN_6,    WN_5,    WN_F1,   _______,
     WN_Q,    WN_4,    WN_3,    WN_2,    WN_1,    WN_F2,   _______,
     KC_F2,   _______, KC_TAB,  KC_LCTL, WN_9,    WN_F3,
@@ -347,9 +360,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   
   //---------------------------------------------------------------------------
   // Желтый слой
-  [8] = MY_layout(
+  [LAYER_YELLOW] = MY_layout(
     // LEFT HALF
-    TG(8),   RGB_HUI, RGB_SAI, RGB_VAI, RGB_SPI, RGB_MOD, RGB_TOG,
+    TG(LAYER_YELLOW), RGB_HUI, RGB_SAI, RGB_VAI, RGB_SPI, RGB_MOD, RGB_TOG,
     RGB_PRT, RGB_HUD, RGB_SAD, RGB_VAD, RGB_SPD, RGB_RMOD,RGB_LYR,
     RGB__0,  RGB__1,  RGB__2,  RGB__25, RGB__28, RGB__36, RGB__27,
     RGB__7,  RGB__13, RGB__15, RGB__16, RGB__17, _______,
@@ -369,9 +382,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   //---------------------------------------------------------------------------
   // Оранжевый слой (Слой на случай ядерной войны)
-  [9] = MY_layout(
+  [LAYER_ORANGE] = MY_layout(
     // LEFT HALF
-    TG(9),   KC_SLCK, KC_CAPS, KC_INS,  KC_PAUS, KC_PSCR, KC_APP,
+    TG(LAYER_ORANGE), KC_SLCK, KC_CAPS, KC_INS,  KC_PAUS, KC_PSCR, KC_APP,
     _______, _______, _______, _______, _______, _______, _______,
     _______, MU_LAN1, MU_LAN2, MU_LAN3, MU_LAN4, _______, _______,
     KC_LSFT, _______, _______, _______, _______, _______,
@@ -460,12 +473,12 @@ const ComboWithKeycode combos[] PROGMEM = {
 const uint8_t combos_size = MY_ARRAY_SIZE(combos);
 
 const uint16_t tt_keys[][3] = {
-  { TT_004, MO(4), TG(4) },
-  { TT_005, MO(5), TG(5) },
-  { TT_006, MO(6), TG(6) },
-  { TT_007, MO(7), TG(7) },
-  { TT_008, MO(8), TG(8) },
-  { TT_009, MO(9), TG(9) },
+  { TT_004, MO(LAYER_RED), TG(LAYER_RED) },
+  { TT_005, MO(LAYER_GREEN), TG(LAYER_GREEN) },
+  { TT_006, MO(LAYER_GAME), TG(LAYER_GAME) },
+  { TT_007, MO(LAYER_PURPLE), TG(LAYER_PURPLE) },
+  { TT_008, MO(LAYER_YELLOW), TG(LAYER_YELLOW) },
+  { TT_009, MO(LAYER_ORANGE), TG(LAYER_ORANGE) },
 };
 const uint8_t tt_size = MY_ARRAY_SIZE(tt_keys);
 
@@ -480,7 +493,7 @@ enum ledmap_colors {
 };
 
 const uint8_t PROGMEM ledmap[][DRIVER_LED_TOTAL] = {
-    [0] = {
+    [LAYER_EN] = {
       COLOR_ANYFN, COLOR_PINKY, COLOR_PINKY, COLOR_PINKY, COLOR_ANYFN,
       COLOR_PINKY, COLOR_PINKY, COLOR_PINKY, COLOR_PINKY, COLOR_ANYFN,
       COLOR_ANNUL, COLOR_ANNUL, COLOR_ANNUL, COLOR_ANNUL, COLOR_ANYFN,
@@ -502,7 +515,7 @@ const uint8_t PROGMEM ledmap[][DRIVER_LED_TOTAL] = {
       COLOR_THUMB, COLOR_THUMB, COLOR_THUMB
     },
 
-    [1] = {
+    [LAYER_EN_SHIFT] = {
       ___________, ___________, ___________, ___________, ___________,
       ___________, ___________, ___________, ___________, ___________,
       ___________, ___________, ___________, ___________, ___________,
@@ -538,20 +551,20 @@ const uint8_t PROGMEM colormap[][3] = {
 const uint8_t colormap_size = MY_ARRAY_SIZE(colormap);
 
 const uint8_t PROGMEM layermap[][3] = {
-  [0] = { 0, 0, 255 },
-  [1] = { 0, 0, 192 },
+  [LAYER_EN] = { 0, 0, 255 },
+  [LAYER_EN_SHIFT] = { 0, 0, 192 },
 
-  [2] = { 164, 255, 255 },
-  [3] = { 164, 255, 192 },
+  [LAYER_RU] = { 164, 255, 255 },
+  [LAYER_RU_SHIFT] = { 164, 255, 192 },
 
-  [4] = { 0, 255, 210 },
-  [5] = { 76, 255, 255 },
-  [6] = { 228, 255, 255 },
+  [LAYER_RED] = { 0, 255, 210 },
+  [LAYER_GREEN] = { 76, 255, 255 },
+  [LAYER_GAME] = { 228, 255, 255 },
 
-  [7] = { 188, 255, 255 },
-  [8] = { 35, 255, 255 },
+  [LAYER_PURPLE] = { 188, 255, 255 },
+  [LAYER_YELLOW] = { 35, 255, 255 },
 
-  [9] = { 8, 255, 255 },
+  [LAYER_ORANGE] = { 8, 255, 255 },
 };
 const uint8_t layermap_size = MY_ARRAY_SIZE(layermap);
 
