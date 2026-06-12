@@ -5,6 +5,10 @@
 #endif
 #include "version.h"
 
+#ifndef CONSOLE_ENABLE
+#define uprintf(...) ((void)0)
+#endif
+
 #include "arbitrary_keycode/include.h"
 
 #define CUSTOM_SAFE_RANGE ML_SAFE_RANGE
