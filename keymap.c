@@ -20,6 +20,8 @@ enum custom_keycodes {
   #define CUSTOM_SAFE_RANGE NEW_NEW_SAFE_RANGE
 };
 
+#define MY_ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+
 #define MY_layout( \
     k00, k01, k02, k03, k04, k05, k06, \
     k10, k11, k12, k13, k14, k15, k16, \
@@ -455,7 +457,7 @@ const ComboWithKeycode combos[] PROGMEM = {
   CHORD(RU_S_T,  /* <- */ CMS_S_T),
   CHORD(RU_S_HD, /* <- */ CMS_S_R, CMS_S_T),
 };
-const uint8_t combos_size = sizeof(combos)/sizeof(ComboWithKeycode);
+const uint8_t combos_size = MY_ARRAY_SIZE(combos);
 
 const uint16_t tt_keys[][3] = {
   { TT_004, MO(4), TG(4) },
@@ -465,7 +467,7 @@ const uint16_t tt_keys[][3] = {
   { TT_008, MO(8), TG(8) },
   { TT_009, MO(9), TG(9) },
 };
-const uint8_t tt_size = sizeof(tt_keys)/(sizeof(uint16_t) * 3);
+const uint8_t tt_size = MY_ARRAY_SIZE(tt_keys);
 
 enum ledmap_colors {
   COLOR_BLACK = COLOR_SAFE_RANGE, // Чёрный цвет
@@ -522,7 +524,7 @@ const uint8_t PROGMEM ledmap[][DRIVER_LED_TOTAL] = {
       COLOR_LAYER, COLOR_LAYER, COLOR_LAYER
     },
 };
-const uint8_t ledmap_size = sizeof(ledmap)/(sizeof(uint8_t) * DRIVER_LED_TOTAL);
+const uint8_t ledmap_size = MY_ARRAY_SIZE(ledmap);
 
 const uint8_t PROGMEM colormap[][3] = {
   [COLOR_BLACK] = { 0, 0, 0 },
@@ -533,7 +535,7 @@ const uint8_t PROGMEM colormap[][3] = {
   [COLOR_INDEX] = { 224, 255, 255 },
   [COLOR_THUMB] = { 8, 255, 255 },
 };
-const uint8_t colormap_size = sizeof(colormap)/(sizeof(uint8_t) * 3);
+const uint8_t colormap_size = MY_ARRAY_SIZE(colormap);
 
 const uint8_t PROGMEM layermap[][3] = {
   [0] = { 0, 0, 255 },
@@ -551,7 +553,7 @@ const uint8_t PROGMEM layermap[][3] = {
 
   [9] = { 8, 255, 255 },
 };
-const uint8_t layermap_size = sizeof(layermap)/(sizeof(uint8_t) * 3);
+const uint8_t layermap_size = MY_ARRAY_SIZE(layermap);
 
 bool initted_for_layer_state = false;
 layer_state_t layer_state_set_user(layer_state_t state) {
