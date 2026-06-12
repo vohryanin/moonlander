@@ -261,6 +261,14 @@ uint8_t lang_pressed_count = 0;
   #define LANG_SYNC_DELAY 30
 #endif
 
+#ifndef LANG_DIRECT_EN_KEY
+  #define LANG_DIRECT_EN_KEY KC_3
+#endif
+
+#ifndef LANG_DIRECT_RU_KEY
+  #define LANG_DIRECT_RU_KEY KC_1
+#endif
+
 #ifndef LANG_MODIFIERS_STACK_SIZE
   #define LANG_MODIFIERS_STACK_SIZE 8
 #endif
@@ -383,6 +391,20 @@ static void lang_sync_tap_with_modifier_without_shift(uint8_t modifier, uint8_t 
   lang_sync_restore_shift(restore_shift);
 }
 
+static void lang_sync_tap_ctrl_without_shift(uint8_t keycode) {
+  lang_sync_tap_with_modifier_without_shift(KC_LCTRL, keycode);
+}
+
+static void lang_sync_tap_ctrl_shift(uint8_t keycode) {
+  bool restore_shift = shift_current == 1;
+  register_code(KC_LCTRL);
+  register_code(KC_LSHIFT);
+  tap_code(keycode);
+  unregister_code(KC_LSHIFT);
+  unregister_code(KC_LCTRL);
+  lang_sync_restore_shift(restore_shift);
+}
+
 static void lang_sync_tap_shift_modifier(uint8_t modifier) {
   bool restore_shift = shift_current == 1;
   register_code(modifier);
@@ -392,7 +414,18 @@ static void lang_sync_tap_shift_modifier(uint8_t modifier) {
   lang_sync_restore_shift(restore_shift);
 }
 
-void lang_synchronize(void) {
+static void lang_sync_direct(Lang lang) {
+  switch (lang) {
+    case 0:
+      lang_sync_tap_ctrl_without_shift(LANG_DIRECT_EN_KEY);
+      break;
+    case 1:
+      lang_sync_tap_ctrl_shift(LANG_DIRECT_RU_KEY);
+      break;
+  }
+}
+
+void lang_synchronize(Lang lang) {
   lang_timer = timer_read();
   switch (lang_current_change) {
     case LANG_CHANGE_CAPS: {
@@ -410,14 +443,22 @@ void lang_synchronize(void) {
     case LANG_CHANGE_WIN_SPACE: {
       lang_sync_tap_with_modifier_without_shift(KC_LGUI, KC_SPACE);
     } break;
+    case LANG_CHANGE_DIRECT: {
+      lang_sync_direct(lang);
+    } break;
   }
+}
+
+static void lang_force_sync(Lang lang) {
+	lang_synchronize(lang);
+	wait_ms(LANG_SYNC_DELAY);
+	lang_current = lang;
 }
 
 void lang_activate(Lang lang) {
 	// Нужно дополнять этот код, если нужно три языка и более
 	if (lang_current != lang) {
-		lang_synchronize();
-		wait_ms(LANG_SYNC_DELAY);
+		lang_force_sync(lang);
 	}
 	lang_current = lang;
 }
@@ -430,6 +471,15 @@ void lang_activate_from_user(Lang lang) {
 void lang_activate_from_user_without_sync(Lang lang) {
 	lang_should_be = lang;
 	lang_current = lang;
+}
+
+static void lang_activate_from_user_force_if_direct(Lang lang) {
+	lang_should_be = lang;
+	if (lang_current_change == LANG_CHANGE_DIRECT) {
+		lang_force_sync(lang);
+	} else {
+		lang_activate(lang);
+	}
 }
 
 Key lang_process(Key key, bool down) {
@@ -555,39 +605,29 @@ bool lang_shift_process_custom_keycodes(Key key, keyrecord_t* record) {
     case LA_CHNG:
       if (down) {
         if (lang_should_be == 0) {
-          lang_activate_from_user(1);
+          lang_activate_from_user_force_if_direct(1);
           layer_on(2);  
         } else {
-          lang_activate_from_user(0);
+          lang_activate_from_user_force_if_direct(0);
           layer_off(2);
         }
       }
       return false;
     case LA_EN:
       if (down) {
-       lang_activate_from_user(0);
-       layer_off(2);
-       register_code(KC_LCTRL);
-       register_code(KC_LSHIFT);
-       tap_code(KC_0);
-       unregister_code(KC_LSHIFT);
-       unregister_code(KC_LCTRL);
+        lang_activate_from_user_force_if_direct(0);
+        layer_off(2);
       }
       return false;
     case LA_RU:
       if (down) {
-       lang_activate_from_user(1);
-       layer_on(2);
-       register_code(KC_LCTRL);
-       register_code(KC_LSHIFT);
-       tap_code(KC_1);
-       unregister_code(KC_LSHIFT);
-       unregister_code(KC_LCTRL);
+        lang_activate_from_user_force_if_direct(1);
+        layer_on(2);
       }
       return false;
     case LA_SYNC:
       if (down) {
-        lang_synchronize();
+        lang_force_sync(lang_should_be);
       }
       return false;
     case LA_CAPS:

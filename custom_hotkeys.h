@@ -94,6 +94,7 @@ bool process_my_hotkeys(uint16_t keycode, keyrecord_t *record) {
           case LANG_CHANGE_CAPS: {
             tap_ctrl_shift(KC_PSCR);
           } break;
+          case LANG_CHANGE_DIRECT:
           case LANG_CHANGE_ALT_SHIFT:
           case LANG_CHANGE_CTRL_SHIFT: {
             tap_gui_shift(KC_S);

@@ -24,6 +24,14 @@ LANG_CHANGE_CAPS
 LANG_CHANGE_ALT_SHIFT
 LANG_CHANGE_CTRL_SHIFT
 LANG_CHANGE_WIN_SPACE
+LANG_CHANGE_DIRECT
+```
+
+Для `LANG_CHANGE_DIRECT` задаются прямые клавиши выбора языка:
+
+```c
+#define LANG_DIRECT_EN_KEY KC_3 // Ctrl+3
+#define LANG_DIRECT_RU_KEY KC_1 // Ctrl+Shift+1
 ```
 
 Так же этими вариантами можно задавать способ переключения языка во время работы раскладки, модифицируя переменную `lang_current_change`, либо прямо на раскладке используя кейкоды:

@@ -279,7 +279,7 @@ enum lang_shift_keycodes {
 	LA_CAPS, /* Задаёт переключение языка на Caps. */
 	LA_ALSH, /* Задаёт переключение языка на Alt + Shift. */
 	LA_CTSH, /* Задаёт переключение языка на Ctrl + Shift. */
-	LA_WISP, /* Задаёт переключение языка на Win + Shift. */
+	LA_WISP, /* Задаёт переключение языка на Win + Space. */
 
 	/* -------------------------------------------------------------------- */
 	/* SAFE_RANGE данной библиотеки. */
@@ -302,7 +302,8 @@ enum LangChange {
   LANG_CHANGE_CAPS,
   LANG_CHANGE_ALT_SHIFT,
   LANG_CHANGE_CTRL_SHIFT,
-  LANG_CHANGE_WIN_SPACE
+  LANG_CHANGE_WIN_SPACE,
+  LANG_CHANGE_DIRECT
 };
 
 // Переменная, в которой можно менять текущий способ смены языка
@@ -319,7 +320,7 @@ void shift_activate_from_user(Shift shift);
 void shift_once_use_to_next_key(uint8_t layer);
 
 uint8_t lang_get_shift_layer_number(void);
-void lang_synchronize(void);
+void lang_synchronize(Lang lang);
 void lang_activate(Lang lang);
 void lang_activate_from_user(Lang lang);
 
