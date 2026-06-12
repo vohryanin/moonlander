@@ -355,52 +355,60 @@ uint8_t lang_get_shift_layer_number(void) {
   return lang_should_be * 2 + 1;
 }
 
+static bool lang_sync_release_shift_if_active(void) {
+  bool restore_shift = shift_current == 1;
+  if (restore_shift) {
+    unregister_code(KC_LSHIFT);
+  }
+  return restore_shift;
+}
+
+static void lang_sync_restore_shift(bool restore_shift) {
+  if (restore_shift) {
+    register_code(KC_LSHIFT);
+  }
+}
+
+static void lang_sync_tap_without_shift(uint8_t keycode) {
+  bool restore_shift = lang_sync_release_shift_if_active();
+  tap_code(keycode);
+  lang_sync_restore_shift(restore_shift);
+}
+
+static void lang_sync_tap_with_modifier_without_shift(uint8_t modifier, uint8_t keycode) {
+  bool restore_shift = lang_sync_release_shift_if_active();
+  register_code(modifier);
+  tap_code(keycode);
+  unregister_code(modifier);
+  lang_sync_restore_shift(restore_shift);
+}
+
+static void lang_sync_tap_shift_modifier(uint8_t modifier) {
+  bool restore_shift = shift_current == 1;
+  register_code(modifier);
+  register_code(KC_LSHIFT);
+  unregister_code(KC_LSHIFT);
+  unregister_code(modifier);
+  lang_sync_restore_shift(restore_shift);
+}
+
 void lang_synchronize(void) {
   lang_timer = timer_read();
   switch (lang_current_change) {
     case LANG_CHANGE_CAPS: {
       // Костыль, потому что при нажатии Shift+Caps включается режим Caps, а не переключение языка :facepalm:
-      if (shift_current == 1) {
-      	unregister_code(KC_LSHIFT);
-        tap_code(KC_CAPS);
-      	register_code(KC_LSHIFT);
-      } else {
-        tap_code(KC_CAPS);
-      }
+      lang_sync_tap_without_shift(KC_CAPS);
     } break;
     case LANG_CHANGE_ALT_SHIFT: {
-      register_code(KC_LALT);
-      register_code(KC_LSHIFT);
-      unregister_code(KC_LSHIFT);
-      unregister_code(KC_LALT);
-
       // Костыль, потому что при зажатом шифте если хочется нажать клавишу, которая переключает язык, то шифт слетает... 
-      if (shift_current == 1) {
-        register_code(KC_LSHIFT);
-      }
+      lang_sync_tap_shift_modifier(KC_LALT);
     } break;
     case LANG_CHANGE_CTRL_SHIFT: {
-      register_code(KC_LCTRL);
-      register_code(KC_LSHIFT);
-      unregister_code(KC_LSHIFT);
-      unregister_code(KC_LCTRL);
-
       // Костыль, потому что при зажатом шифте если хочется нажать клавишу, которая переключает язык, то шифт слетает...
-      if (shift_current == 1) {
-        register_code(KC_LSHIFT);
-      }
+      lang_sync_tap_shift_modifier(KC_LCTRL);
     } break;
     case LANG_CHANGE_WIN_SPACE: {
-      bool restore_shift = shift_current == 1;
-      if (restore_shift) {
-        unregister_code(KC_LSHIFT);
-      }
-      register_code(KC_LGUI);
-      tap_code(KC_SPACE);
-      unregister_code(KC_LGUI);
-      if (restore_shift) {
-        register_code(KC_LSHIFT);
-      }
+      lang_sync_tap_with_modifier_without_shift(KC_LGUI, KC_SPACE);
     } break;
   }
 }
