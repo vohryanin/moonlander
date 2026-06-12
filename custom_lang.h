@@ -60,9 +60,9 @@ bool process_my_lang_keys(uint16_t keycode, keyrecord_t *record) {
         lang_shift_tap_key(EN_GT);
         lang_shift_tap_key(EN_LPRN);
         lang_shift_tap_key(EN_RPRN);
-        register_code(KC_LEFT); unregister_code(KC_LEFT);
-        register_code(KC_LEFT); unregister_code(KC_LEFT);
-        register_code(KC_LEFT); unregister_code(KC_LEFT);
+        tap_code(KC_LEFT);
+        tap_code(KC_LEFT);
+        tap_code(KC_LEFT);
       }
       return false;
       break;
@@ -71,7 +71,7 @@ bool process_my_lang_keys(uint16_t keycode, keyrecord_t *record) {
         lang_shift_tap_key(EN_HASH);
         lang_shift_tap_key(EN_LBRC);
         lang_shift_tap_key(EN_RBRC);
-        register_code(KC_LEFT); unregister_code(KC_LEFT);
+        tap_code(KC_LEFT);
       }
       return false;
       break;

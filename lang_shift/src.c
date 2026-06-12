@@ -358,12 +358,10 @@ void lang_synchronize(void) {
       // Костыль, потому что при нажатии Shift+Caps включается режим Caps, а не переключение языка :facepalm:
       if (shift_current == 1) {
       	unregister_code(KC_LSHIFT);
-      	register_code(KC_CAPS);
-      	unregister_code(KC_CAPS);
+        tap_code(KC_CAPS);
       	register_code(KC_LSHIFT);
       } else {
-      	register_code(KC_CAPS);
-      	unregister_code(KC_CAPS);
+        tap_code(KC_CAPS);
       }
     } break;
     case LANG_CHANGE_ALT_SHIFT: {
@@ -390,8 +388,7 @@ void lang_synchronize(void) {
     } break;
     case LANG_CHANGE_WIN_SPACE: {
       register_code(KC_LGUI);
-      register_code(KC_SPACE);
-      unregister_code(KC_SPACE);
+      tap_code(KC_SPACE);
       unregister_code(KC_LGUI);
     } break;
   }
@@ -552,8 +549,7 @@ bool lang_shift_process_custom_keycodes(Key key, keyrecord_t* record) {
        layer_off(2);
        register_code(KC_LCTRL);
        register_code(KC_LSHIFT);
-       register_code(KC_0);
-       unregister_code(KC_0);
+       tap_code(KC_0);
        unregister_code(KC_LSHIFT);
        unregister_code(KC_LCTRL);
       }
@@ -564,8 +560,7 @@ bool lang_shift_process_custom_keycodes(Key key, keyrecord_t* record) {
        layer_on(2);
        register_code(KC_LCTRL);
        register_code(KC_LSHIFT);
-       register_code(KC_1);
-       unregister_code(KC_1);
+       tap_code(KC_1);
        unregister_code(KC_LSHIFT);
        unregister_code(KC_LCTRL);
       }
@@ -606,16 +601,14 @@ bool lang_shift_process_custom_keycodes(Key key, keyrecord_t* record) {
     case AG_CMSP:
       if (record->event.pressed) {
         lang_shift_tap_key(AG_COMM);
-        register_code(KC_SPC);
-        unregister_code(KC_SPC);
+        tap_code(KC_SPC);
       }
       return false;
       break;
     case AG_SDOT:
       if (record->event.pressed) {
         lang_shift_tap_key(AG_DOT);
-        register_code(KC_SPC);
-        unregister_code(KC_SPC);
+        tap_code(KC_SPC);
         shift_once_use_to_next_key(lang_get_shift_layer_number());
       }
       return false;

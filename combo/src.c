@@ -5,6 +5,13 @@ typedef struct Combo {
   uint32_t last_modify_time;
 } Combo;
 
+enum ComboState {
+  COMBO_STATE_COLLECTING = 1,
+  COMBO_STATE_PRESSED,
+  COMBO_STATE_RELEASE_ONLY,
+  COMBO_STATE_IMMEDIATE,
+};
+
 // #define COMBO_DEBUG
 
 #ifdef COMBO_DEBUG
@@ -174,13 +181,13 @@ void process_combo_as_usual(keyrecord_t* record) {
 }
 
 void combo_onenter_1(Combo *combo) {
-  combo->state = 1;
+  combo->state = COMBO_STATE_COLLECTING;
 }
 
 void combo_onenter_2(Combo *combo, ComboPos pos, keyrecord_t* record) {
   combo_press(pos, true);
   process_as_usual(record);
-  combo->state = 2;
+  combo->state = COMBO_STATE_PRESSED;
 }
 
 void combo_onenter_end(Combo *combo) {
@@ -202,7 +209,7 @@ void combo_onenter_end(Combo *combo) {
   }
 }
 
-void combo_onenter_3(Combo *combo, ComboKey key) {
+bool combo_onenter_3(Combo *combo, ComboKey key) {
   uint8_t pos = combo->size;
   for (uint8_t i = 0; i < combo->size; ++i) {
     if (eq_combo_key(combo->array[i], key)) {
@@ -211,7 +218,7 @@ void combo_onenter_3(Combo *combo, ComboKey key) {
   }
 
   if (pos == combo->size) {
-    return;
+    return false;
   }
 
   combo->size--;
@@ -220,11 +227,13 @@ void combo_onenter_3(Combo *combo, ComboKey key) {
     combo->array[i] = combo->array[i+1];
   }
 
-  combo->state = 3;
+  combo->state = COMBO_STATE_RELEASE_ONLY;
 
   if (combo->size == 0) {
     combo_onenter_end(combo);
   }
+
+  return true;
 }
 
 bool combo_process_1(Combo *combo, uint16_t key, keyrecord_t *record) {
@@ -246,7 +255,7 @@ bool combo_process_1(Combo *combo, uint16_t key, keyrecord_t *record) {
         ComboPos newpos = combo_get_pos(combo);
         if (combo_is_immediate(newpos)) {
           combo_press(newpos, true);
-          combo->state = 4;
+          combo->state = COMBO_STATE_IMMEDIATE;
         }
       }
       return false;
@@ -254,7 +263,7 @@ bool combo_process_1(Combo *combo, uint16_t key, keyrecord_t *record) {
       if (neq_combo_pos(pos, NONE_COMBO_POS) && combo_k_enabled) {
         combo_press(pos, true);
         process_combo_as_usual(record);
-        combo->state = 2;
+        combo->state = COMBO_STATE_PRESSED;
         TRANSITION_DEBUG(k);
         return false;
       }
@@ -282,7 +291,7 @@ bool combo_process_1(Combo *combo, uint16_t key, keyrecord_t *record) {
       }
     }
   } else {
-    if (up && neq_combo_key(key_combo, NONE_COMBO_KEY)) {
+    if (up && neq_combo_key(key_combo, NONE_COMBO_KEY) && combo_has_key(combo, key_combo)) {
       combo_onenter_3(combo, key_combo);
       TRANSITION_DEBUG(f);
       if (combo->size == 0) {
@@ -342,12 +351,12 @@ bool combo_process_4(Combo *combo, uint16_t key, keyrecord_t *record) {
   if (down && neq_combo_key(key_combo, NONE_COMBO_KEY)) {
     if (combo_has_prefix(combo, key_combo)) {
       combo_press_undo(pos);
-      combo->state = 1;
+      combo->state = COMBO_STATE_COLLECTING;
       TRANSITION_DEBUG(e4);
       return combo_process_1(combo, key, record);
     } else {
       if (neq_combo_pos(pos, NONE_COMBO_POS) && combo_k_enabled) {
-        combo->state = 2;
+        combo->state = COMBO_STATE_PRESSED;
         TRANSITION_DEBUG(k4);
         return true;
       }
@@ -377,10 +386,10 @@ bool combo_process_4(Combo *combo, uint16_t key, keyrecord_t *record) {
 
 bool combo_process_local_states(Combo *combo, uint16_t key, keyrecord_t *record) {
   switch (combo->state) {
-    case 1: return combo_process_1(combo, key, record);
-    case 2: return combo_process_2(combo, key, record);
-    case 3: return combo_process_3(combo, key, record);
-    case 4: return combo_process_4(combo, key, record);
+    case COMBO_STATE_COLLECTING: return combo_process_1(combo, key, record);
+    case COMBO_STATE_PRESSED: return combo_process_2(combo, key, record);
+    case COMBO_STATE_RELEASE_ONLY: return combo_process_3(combo, key, record);
+    case COMBO_STATE_IMMEDIATE: return combo_process_4(combo, key, record);
   }
   return true;
 }
@@ -409,14 +418,14 @@ bool combo_process_record(uint16_t key, keyrecord_t *record) {
       combo_stack_size++;
       combo->array[0] = key_combo;
       combo->size = 1;
-      combo->state = 1;
+      combo->state = COMBO_STATE_COLLECTING;
       combo->last_modify_time = timer_read();
       TRANSITION_DEBUG(a);
 
       ComboPos pos = combo_get_pos(combo);
       if (combo_is_immediate(pos)) {
         combo_press(pos, true);
-        combo->state = 4;
+        combo->state = COMBO_STATE_IMMEDIATE;
       }
     }
     return false;
@@ -428,20 +437,20 @@ bool combo_process_record(uint16_t key, keyrecord_t *record) {
 void combo_user_timer(void) {
   for (int i = 0; i < combo_stack_size; ++i) {
     Combo* combo = &combo_stack[i];
-    if (combo->state == 1) {
+    if (combo->state == COMBO_STATE_COLLECTING) {
       if (timer_read() - combo->last_modify_time > COMBO_WAIT_TIME) {
         ComboPos pos = combo_get_pos(combo);
         if (neq_combo_pos(pos, NONE_COMBO_POS)) {
           combo_press(pos, true);
-          combo->state = 2;
+          combo->state = COMBO_STATE_PRESSED;
           TRANSITION_DEBUG(d);
         }
       }
-    } else if (combo->state == 4) {
+    } else if (combo->state == COMBO_STATE_IMMEDIATE) {
       if (timer_read() - combo->last_modify_time > COMBO_WAIT_TIME) {
         ComboPos pos = combo_get_pos(combo);
         if (neq_combo_pos(pos, NONE_COMBO_POS)) {
-          combo->state = 2;
+          combo->state = COMBO_STATE_PRESSED;
           TRANSITION_DEBUG(d4);
         }
       }

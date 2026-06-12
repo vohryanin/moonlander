@@ -31,25 +31,20 @@ bool process_my_hotkeys(uint16_t keycode, keyrecord_t *record) {
   switch (keycode) {
     case KG_NEXT:
       if (record->event.pressed) {
-        register_code(KC_TAB);
-        unregister_code(KC_TAB);
-        register_code(KC_TAB);
-        unregister_code(KC_TAB);
+        tap_code(KC_TAB);
+        tap_code(KC_TAB);
         register_code(KC_LCTRL);
-        register_code(KC_RGHT);
-        unregister_code(KC_RGHT);
+        tap_code(KC_RGHT);
         unregister_code(KC_LCTRL);
       }    
       return false;
       break;
     case F6_CT_C:
       if (record->event.pressed) {
-        register_code(KC_F6);
-        unregister_code(KC_F6);
+        tap_code(KC_F6);
 
         register_code(KC_LCTL);
-          register_code(KC_C);
-          unregister_code(KC_C);
+          tap_code(KC_C);
         unregister_code(KC_LCTL);
       }
       return false;
@@ -60,8 +55,7 @@ bool process_my_hotkeys(uint16_t keycode, keyrecord_t *record) {
           case LANG_CHANGE_CAPS: {
             register_code(KC_LCTRL);
             register_code(KC_LSHIFT);
-            register_code(KC_PSCR);
-            unregister_code(KC_PSCR);
+            tap_code(KC_PSCR);
             unregister_code(KC_LSHIFT);
             unregister_code(KC_LCTRL);
           } break;
@@ -69,8 +63,7 @@ bool process_my_hotkeys(uint16_t keycode, keyrecord_t *record) {
           case LANG_CHANGE_CTRL_SHIFT: {
             register_code(KC_LGUI);
               register_code(KC_LSHIFT);
-              register_code(KC_S);
-            unregister_code(KC_S);
+              tap_code(KC_S);
               unregister_code(KC_LSHIFT);
               unregister_code(KC_LGUI);
           } break;
@@ -85,10 +78,8 @@ bool process_my_hotkeys(uint16_t keycode, keyrecord_t *record) {
       if (record->event.pressed) {
         shift_activate(0);
         register_code(KC_LCTRL);
-        register_code(KC_A);
-        unregister_code(KC_A);
-        register_code(KC_C);
-        unregister_code(KC_C);
+        tap_code(KC_A);
+        tap_code(KC_C);
         unregister_code(KC_LCTRL);
       }
       return false;
@@ -96,10 +87,8 @@ bool process_my_hotkeys(uint16_t keycode, keyrecord_t *record) {
       if (record->event.pressed) {
         shift_activate(0);
         register_code(KC_LCTRL);
-        register_code(KC_A);
-        unregister_code(KC_A);
-        register_code(KC_V);
-        unregister_code(KC_V);
+        tap_code(KC_A);
+        tap_code(KC_V);
         unregister_code(KC_LCTRL);
       }
       return false;
@@ -107,10 +96,8 @@ bool process_my_hotkeys(uint16_t keycode, keyrecord_t *record) {
       if (record->event.pressed) {
         shift_activate(0);
         register_code(KC_LCTRL);
-        register_code(KC_A);
-        unregister_code(KC_A);
-        register_code(KC_X);
-        unregister_code(KC_X);
+        tap_code(KC_A);
+        tap_code(KC_X);
         unregister_code(KC_LCTRL);
       }
       return false;
