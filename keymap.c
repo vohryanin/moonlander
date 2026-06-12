@@ -1,5 +1,8 @@
 #include QMK_KEYBOARD_H
 #include <quantum/pointing_device.h>
+#ifdef RAW_ENABLE
+#include "raw_hid.h"
+#endif
 #include "version.h"
 
 #include "arbitrary_keycode/include.h"
@@ -649,3 +652,42 @@ void rgb_matrix_indicators_user(void) {
 void keyboard_post_init_user(void) {
   rgb_matrix_enable();
 }
+
+#ifdef RAW_ENABLE
+enum host_lang_sync_command {
+  HOST_LANG_SYNC_SET_LAYOUT = 1,
+};
+
+enum host_lang_sync_layout {
+  HOST_LANG_SYNC_EN = 0,
+  HOST_LANG_SYNC_RU = 1,
+};
+
+static bool host_lang_sync_is_packet(uint8_t *data, uint8_t length) {
+  return length >= 7 &&
+         data[0] == 'M' &&
+         data[1] == 'L' &&
+         data[2] == 'N' &&
+         data[3] == 'G' &&
+         data[4] == 1;
+}
+
+void raw_hid_receive(uint8_t *data, uint8_t length) {
+  if (!host_lang_sync_is_packet(data, length)) {
+    return;
+  }
+
+  switch (data[5]) {
+    case HOST_LANG_SYNC_SET_LAYOUT:
+      switch (data[6]) {
+        case HOST_LANG_SYNC_EN:
+          lang_activate_from_host(0);
+          break;
+        case HOST_LANG_SYNC_RU:
+          lang_activate_from_host(1);
+          break;
+      }
+      break;
+  }
+}
+#endif

@@ -2,6 +2,7 @@
 # See rules at https://docs.qmk.fm/#/config_options?id=the-rulesmk-file
 COMMAND_ENABLE = no
 WEBUSB_ENABLE = yes
+RAW_ENABLE = yes
 ORYX_ENABLE = yes
 SRC = matrix.c
 RGBLIGHT_ENABLE = no

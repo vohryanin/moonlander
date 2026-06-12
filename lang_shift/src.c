@@ -473,6 +473,18 @@ void lang_activate_from_user_without_sync(Lang lang) {
 	lang_current = lang;
 }
 
+void lang_activate_from_host(Lang lang) {
+	lang_activate_from_user_without_sync(lang);
+	switch (lang) {
+		case 0:
+			layer_off(2);
+			break;
+		case 1:
+			layer_on(2);
+			break;
+	}
+}
+
 static void lang_activate_from_user_force_if_direct(Lang lang) {
 	lang_should_be = lang;
 	if (lang_current_change == LANG_CHANGE_DIRECT) {

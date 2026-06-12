@@ -323,6 +323,7 @@ uint8_t lang_get_shift_layer_number(void);
 void lang_synchronize(Lang lang);
 void lang_activate(Lang lang);
 void lang_activate_from_user(Lang lang);
+void lang_activate_from_host(Lang lang);
 
 void lang_shift_press_key(Key key, bool down);
 void lang_shift_tap_key(Key key);
