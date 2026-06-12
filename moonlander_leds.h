@@ -19,16 +19,32 @@ enum moonlander_leds_keycodes {
   #define CUSTOM_SAFE_RANGE MOONLANDER_LEDS_NEW_SAFE_RANGE
 };
 
-// Мои языко-символьные клавиши
+enum moonlander_leds_config {
+  MOONLANDER_LED_COUNT = LED_6 - LED_1 + 1,
+};
+
+static void moonlander_led_set(uint8_t led_index, bool enabled) {
+  switch (led_index) {
+    case 0: ML_LED_1(enabled); break;
+    case 1: ML_LED_2(enabled); break;
+    case 2: ML_LED_3(enabled); break;
+    case 3: ML_LED_4(enabled); break;
+    case 4: ML_LED_5(enabled); break;
+    case 5: ML_LED_6(enabled); break;
+  }
+}
+
+void moonlander_leds_set_all(bool enabled) {
+  for (uint8_t led_index = 0; led_index < MOONLANDER_LED_COUNT; led_index++) {
+    moonlander_led_set(led_index, enabled);
+  }
+}
+
 bool process_moonlander_leds(uint16_t keycode, keyrecord_t *record) {
-  switch (keycode) {
-    case LED_1: if (record->event.pressed) { ML_LED_1(true); } else { ML_LED_1(false); } return false; break;
-    case LED_2: if (record->event.pressed) { ML_LED_2(true); } else { ML_LED_2(false); } return false; break;
-    case LED_3: if (record->event.pressed) { ML_LED_3(true); } else { ML_LED_3(false); } return false; break;
-    case LED_4: if (record->event.pressed) { ML_LED_4(true); } else { ML_LED_4(false); } return false; break;
-    case LED_5: if (record->event.pressed) { ML_LED_5(true); } else { ML_LED_5(false); } return false; break;
-    case LED_6: if (record->event.pressed) { ML_LED_6(true); } else { ML_LED_6(false); } return false; break;
+  if (keycode < LED_1 || keycode > LED_6) {
+    return true;
   }
 
-  return true;
+  moonlander_led_set((uint8_t)(keycode - LED_1), record->event.pressed);
+  return false;
 }
