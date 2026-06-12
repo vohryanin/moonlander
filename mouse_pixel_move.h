@@ -23,49 +23,36 @@ enum mouse_pixel_move_keycodes {
 };
 
 enum mouse_pixel_move_config {
-  MOUSE_PIXEL_MOVE_DIRECTION_COUNT = 4,
   MOUSE_PIXEL_MOVE_SMALL_STEP = 1,
   MOUSE_PIXEL_MOVE_LARGE_STEP = 10,
 };
 
-enum mouse_pixel_move_direction {
-  MOUSE_PIXEL_MOVE_DOWN,
-  MOUSE_PIXEL_MOVE_UP,
-  MOUSE_PIXEL_MOVE_LEFT,
-  MOUSE_PIXEL_MOVE_RIGHT,
-};
-
-static bool mouse_pixel_move_is_key(uint16_t keycode) {
-  return MS_DN_1 <= keycode && keycode <= MS_RG10;
+static void mouse_pixel_move_send(int8_t x, int8_t y) {
+  report_mouse_t report = {};
+  report.x = x;
+  report.y = y;
+  host_mouse_send(&report);
 }
 
-static report_mouse_t mouse_pixel_move_report(uint16_t keycode) {
-  uint8_t offset = keycode - MS_DN_1;
-  uint8_t direction = offset % MOUSE_PIXEL_MOVE_DIRECTION_COUNT;
-  int8_t step = offset < MOUSE_PIXEL_MOVE_DIRECTION_COUNT
-    ? MOUSE_PIXEL_MOVE_SMALL_STEP
-    : MOUSE_PIXEL_MOVE_LARGE_STEP;
-
-  report_mouse_t report = {};
-  switch (direction) {
-    case MOUSE_PIXEL_MOVE_DOWN: report.y = step; break;
-    case MOUSE_PIXEL_MOVE_UP: report.y = -step; break;
-    case MOUSE_PIXEL_MOVE_LEFT: report.x = -step; break;
-    case MOUSE_PIXEL_MOVE_RIGHT: report.x = step; break;
+static bool mouse_pixel_move_process(keyrecord_t *record, int8_t x, int8_t y) {
+  if (record->event.pressed) {
+    mouse_pixel_move_send(x, y);
   }
-  return report;
+  return false;
 }
 
 bool process_mouse_pixel_move(uint16_t keycode, keyrecord_t *record) {
-  if (!mouse_pixel_move_is_key(keycode)) {
-    return true;
+  switch (keycode) {
+    case MS_DN_1: return mouse_pixel_move_process(record, 0, MOUSE_PIXEL_MOVE_SMALL_STEP);
+    case MS_UP_1: return mouse_pixel_move_process(record, 0, -MOUSE_PIXEL_MOVE_SMALL_STEP);
+    case MS_LF_1: return mouse_pixel_move_process(record, -MOUSE_PIXEL_MOVE_SMALL_STEP, 0);
+    case MS_RG_1: return mouse_pixel_move_process(record, MOUSE_PIXEL_MOVE_SMALL_STEP, 0);
+
+    case MS_DN10: return mouse_pixel_move_process(record, 0, MOUSE_PIXEL_MOVE_LARGE_STEP);
+    case MS_UP10: return mouse_pixel_move_process(record, 0, -MOUSE_PIXEL_MOVE_LARGE_STEP);
+    case MS_LF10: return mouse_pixel_move_process(record, -MOUSE_PIXEL_MOVE_LARGE_STEP, 0);
+    case MS_RG10: return mouse_pixel_move_process(record, MOUSE_PIXEL_MOVE_LARGE_STEP, 0);
   }
 
-  if (!record->event.pressed) {
-    return false;
-  }
-
-  report_mouse_t report = mouse_pixel_move_report(keycode);
-  host_mouse_send(&report);
-  return false;
+  return true;
 }
