@@ -580,12 +580,7 @@ bool initted_for_layer_state = false;
 layer_state_t layer_state_set_user(layer_state_t state) {
   if (initted_for_layer_state) {
     // Выключаем все леды, потому что они только просвечивают своим некрасивым цветом через прозрачные кейкапы, а для чего их использовать можно я не придумал
-    ML_LED_1(false);
-    ML_LED_2(false);
-    ML_LED_3(false);
-    ML_LED_4(false);
-    ML_LED_5(false);
-    ML_LED_6(false);
+    moonlander_leds_set_all(false);
 
     uint8_t layer = get_highest_layer(state);
 
