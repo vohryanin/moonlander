@@ -16,12 +16,19 @@ enum tt_keycodes {
 	#define CUSTOM_SAFE_RANGE TT_NEW_SAFE_RANGE
 };
 
-const uint16_t tt_keys[][3];
+enum tt_key_fields {
+	TT_FIELD_KEYCODE,
+	TT_FIELD_HOLD,
+	TT_FIELD_TOGGLE,
+	TT_FIELD_COUNT,
+};
+
+const uint16_t tt_keys[][TT_FIELD_COUNT];
 const uint8_t tt_size;
 
 uint8_t tt_get_pos(uint16_t key) {
 	for (int i = 0; i < tt_size; ++i) {
-		if (tt_keys[i][0] == key) {
+		if (tt_keys[i][TT_FIELD_KEYCODE] == key) {
 			return i;
 		}
 	}
@@ -47,10 +54,10 @@ bool tt_process_record(uint16_t key, keyrecord_t *record) {
 			}
 
 			tt_now_press = true;
-			press_arbitrary_keycode(tt_keys[pos][1], record->event.pressed);
+			press_arbitrary_keycode(tt_keys[pos][TT_FIELD_HOLD], record->event.pressed);
 			if (tt_count == 3 && !record->event.pressed) {
-				press_arbitrary_keycode(tt_keys[pos][2], true);
-				press_arbitrary_keycode(tt_keys[pos][2], false);
+				press_arbitrary_keycode(tt_keys[pos][TT_FIELD_TOGGLE], true);
+				press_arbitrary_keycode(tt_keys[pos][TT_FIELD_TOGGLE], false);
 				tt_previous_key = 0;
 				tt_count = 0;
 			}

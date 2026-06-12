@@ -52,50 +52,38 @@ void color_set_picture(uint8_t picture) {
 	draw_layer = picture;
 }
 
+static bool color_handle_picture_key(uint16_t keycode, keyrecord_t *record) {
+	if (keycode < PIC_0 || keycode > PIC_2) {
+		return false;
+	}
+
+	if (record->event.pressed) {
+		color_set_picture((uint8_t)(keycode - PIC_0));
+	}
+	return true;
+}
+
+static bool color_handle_rgb_mode_key(uint16_t keycode, keyrecord_t *record) {
+	if (keycode < RGB__0 || keycode > RGB__36) {
+		return false;
+	}
+
+	if (record->event.pressed) {
+		rgblight_mode((uint8_t)(keycode - RGB__0));
+	}
+	return true;
+}
+
 bool color_process_record(uint16_t keycode, keyrecord_t *record) {
+	if (color_handle_picture_key(keycode, record)) {
+		return false;
+	}
+
+	if (color_handle_rgb_mode_key(keycode, record)) {
+		return false;
+	}
+
 	switch (keycode) {
-		case PIC_0: if (record->event.pressed) { color_set_picture(0); } return false;
-		case PIC_1: if (record->event.pressed) { color_set_picture(1); } return false;
-		case PIC_2: if (record->event.pressed) { color_set_picture(2); } return false;
-
-		case RGB__0: if (record->event.pressed) { rgblight_mode(0); } return false; break;
-		case RGB__1: if (record->event.pressed) { rgblight_mode(1); } return false; break;
-		case RGB__2: if (record->event.pressed) { rgblight_mode(2); } return false; break;
-		case RGB__3: if (record->event.pressed) { rgblight_mode(3); } return false; break;
-		case RGB__4: if (record->event.pressed) { rgblight_mode(4); } return false; break;
-		case RGB__5: if (record->event.pressed) { rgblight_mode(5); } return false; break;
-		case RGB__6: if (record->event.pressed) { rgblight_mode(6); } return false; break;
-		case RGB__7: if (record->event.pressed) { rgblight_mode(7); } return false; break;
-		case RGB__8: if (record->event.pressed) { rgblight_mode(8); } return false; break;
-		case RGB__9: if (record->event.pressed) { rgblight_mode(9); } return false; break;
-		case RGB__10: if (record->event.pressed) { rgblight_mode(10); } return false; break;
-		case RGB__11: if (record->event.pressed) { rgblight_mode(11); } return false; break;
-		case RGB__12: if (record->event.pressed) { rgblight_mode(12); } return false; break;
-		case RGB__13: if (record->event.pressed) { rgblight_mode(13); } return false; break;
-		case RGB__14: if (record->event.pressed) { rgblight_mode(14); } return false; break;
-		case RGB__15: if (record->event.pressed) { rgblight_mode(15); } return false; break;
-		case RGB__16: if (record->event.pressed) { rgblight_mode(16); } return false; break;
-		case RGB__17: if (record->event.pressed) { rgblight_mode(17); } return false; break;
-		case RGB__18: if (record->event.pressed) { rgblight_mode(18); } return false; break;
-		case RGB__19: if (record->event.pressed) { rgblight_mode(19); } return false; break;
-		case RGB__20: if (record->event.pressed) { rgblight_mode(20); } return false; break;
-		case RGB__21: if (record->event.pressed) { rgblight_mode(21); } return false; break;
-		case RGB__22: if (record->event.pressed) { rgblight_mode(22); } return false; break;
-		case RGB__23: if (record->event.pressed) { rgblight_mode(23); } return false; break;
-		case RGB__24: if (record->event.pressed) { rgblight_mode(24); } return false; break;
-		case RGB__25: if (record->event.pressed) { rgblight_mode(25); } return false; break;
-		case RGB__26: if (record->event.pressed) { rgblight_mode(26); } return false; break;
-		case RGB__27: if (record->event.pressed) { rgblight_mode(27); } return false; break;
-		case RGB__28: if (record->event.pressed) { rgblight_mode(28); } return false; break;
-		case RGB__29: if (record->event.pressed) { rgblight_mode(29); } return false; break;
-		case RGB__30: if (record->event.pressed) { rgblight_mode(30); } return false; break;
-		case RGB__31: if (record->event.pressed) { rgblight_mode(31); } return false; break;
-		case RGB__32: if (record->event.pressed) { rgblight_mode(32); } return false; break;
-		case RGB__33: if (record->event.pressed) { rgblight_mode(33); } return false; break;
-		case RGB__34: if (record->event.pressed) { rgblight_mode(34); } return false; break;
-		case RGB__35: if (record->event.pressed) { rgblight_mode(35); } return false; break;
-		case RGB__36: if (record->event.pressed) { rgblight_mode(36); } return false; break;
-
 		case RGB_PRT: 
 		if (record->event.pressed) {
 			uprintf(
@@ -114,7 +102,6 @@ bool color_process_record(uint16_t keycode, keyrecord_t *record) {
 			);
 		}
 		return false;
-		break;
 	}
 
 	return true;
