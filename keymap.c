@@ -700,6 +700,7 @@ void user_timer(void) {
   combo_user_timer();
   lang_shift_user_timer();
   lighting_idle_user_timer();
+  mouse_pixel_move_user_timer();
 }
 
 void matrix_scan_user(void) {
