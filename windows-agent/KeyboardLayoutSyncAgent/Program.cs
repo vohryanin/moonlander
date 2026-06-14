@@ -63,7 +63,9 @@ namespace KeyboardLayoutSyncAgent
         private readonly NotifyIcon notifyIcon;
         private readonly System.Windows.Forms.Timer timer;
         private readonly ToolStripMenuItem startupMenuItem;
+        private readonly HotKeyWindow gridHotKeyWindow;
         private Icon currentIcon;
+        private GridOverlayForm gridOverlayForm;
         private KeyboardLayoutKind? lastSentLayout;
         private DateTime lastSentAt = DateTime.MinValue;
 
@@ -74,6 +76,7 @@ namespace KeyboardLayoutSyncAgent
 
             var menu = new ContextMenuStrip();
             menu.Items.Add("Sync now", null, delegate { SyncNow(true); });
+            menu.Items.Add("Grid mode (Ctrl+Alt+G)", null, delegate { ShowGridMode(); });
 
             startupMenuItem = new ToolStripMenuItem("Start with Windows");
             startupMenuItem.Checked = StartupManager.IsEnabled();
@@ -91,6 +94,7 @@ namespace KeyboardLayoutSyncAgent
             timer.Tick += delegate { SyncNow(false); };
             timer.Start();
 
+            gridHotKeyWindow = new HotKeyWindow(delegate { ShowGridMode(); });
             SyncNow(true);
         }
 
@@ -99,6 +103,13 @@ namespace KeyboardLayoutSyncAgent
             if (disposing)
             {
                 timer.Dispose();
+                gridHotKeyWindow.Dispose();
+                if (gridOverlayForm != null)
+                {
+                    gridOverlayForm.Close();
+                    gridOverlayForm.Dispose();
+                    gridOverlayForm = null;
+                }
                 notifyIcon.Visible = false;
                 notifyIcon.Dispose();
                 if (currentIcon != null)
@@ -208,6 +219,372 @@ namespace KeyboardLayoutSyncAgent
         {
             return layout == KeyboardLayoutKind.Russian ? "RU" : "EN";
         }
+
+        private void ShowGridMode()
+        {
+            if (gridOverlayForm != null && !gridOverlayForm.IsDisposed)
+            {
+                gridOverlayForm.Activate();
+                return;
+            }
+
+            gridOverlayForm = new GridOverlayForm();
+            gridOverlayForm.FormClosed += delegate { gridOverlayForm = null; };
+            gridOverlayForm.Show();
+        }
+    }
+
+    internal sealed class HotKeyWindow : NativeWindow, IDisposable
+    {
+        private const int HotKeyId = 1;
+        private const int WmHotKey = 0x0312;
+        private const uint ModAlt = 0x0001;
+        private const uint ModControl = 0x0002;
+
+        private readonly Action onHotKey;
+        private bool registered;
+
+        public HotKeyWindow(Action onHotKey)
+        {
+            this.onHotKey = onHotKey;
+            CreateHandle(new CreateParams());
+            registered = RegisterHotKey(Handle, HotKeyId, ModControl | ModAlt, (uint)Keys.G);
+        }
+
+        public void Dispose()
+        {
+            if (registered)
+            {
+                UnregisterHotKey(Handle, HotKeyId);
+                registered = false;
+            }
+
+            DestroyHandle();
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            if (m.Msg == WmHotKey && m.WParam.ToInt32() == HotKeyId)
+            {
+                onHotKey();
+                return;
+            }
+
+            base.WndProc(ref m);
+        }
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
+    }
+
+    internal sealed class GridOverlayForm : Form
+    {
+        private const int GridSize = 3;
+        private const int MaxDepth = 3;
+
+        private static readonly string[] CellLabels = new string[]
+        {
+            "Q", "W", "E",
+            "A", "S", "D",
+            "Z", "X", "C"
+        };
+
+        private Rectangle virtualScreen;
+        private Rectangle currentArea;
+        private int depth;
+
+        public GridOverlayForm()
+        {
+            virtualScreen = SystemInformation.VirtualScreen;
+            currentArea = virtualScreen;
+
+            Bounds = virtualScreen;
+            BackColor = Color.Black;
+            FormBorderStyle = FormBorderStyle.None;
+            KeyPreview = true;
+            Opacity = 0.84;
+            ShowInTaskbar = false;
+            StartPosition = FormStartPosition.Manual;
+            TopMost = true;
+
+            SetStyle(
+                ControlStyles.AllPaintingInWmPaint |
+                ControlStyles.OptimizedDoubleBuffer |
+                ControlStyles.UserPaint,
+                true);
+        }
+
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+            Activate();
+            Focus();
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            Keys key = keyData & Keys.KeyCode;
+            int cellIndex;
+
+            if (TryGetCellIndex(key, out cellIndex))
+            {
+                SelectCell(cellIndex);
+                return true;
+            }
+
+            switch (key)
+            {
+                case Keys.Escape:
+                    Close();
+                    return true;
+                case Keys.Enter:
+                case Keys.Space:
+                    WarpAndClose();
+                    return true;
+                case Keys.Back:
+                    ResetGrid();
+                    return true;
+                case Keys.M:
+                    ClickAndClose(MouseClickKind.Left);
+                    return true;
+                case Keys.Oemcomma:
+                    ClickAndClose(MouseClickKind.Middle);
+                    return true;
+                case Keys.OemPeriod:
+                    ClickAndClose(MouseClickKind.Right);
+                    return true;
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+
+            using (var dimBrush = new SolidBrush(Color.FromArgb(190, 8, 16, 14)))
+            using (var areaBrush = new SolidBrush(Color.FromArgb(80, 42, 196, 117)))
+            using (var borderPen = new Pen(Color.FromArgb(230, 94, 229, 148), 3))
+            using (var gridPen = new Pen(Color.FromArgb(190, 236, 255, 241), 1))
+            using (var labelBrush = new SolidBrush(Color.White))
+            using (var hintBrush = new SolidBrush(Color.FromArgb(220, 235, 255, 240)))
+            using (var labelFont = new Font(FontFamily.GenericSansSerif, LabelFontSize(), FontStyle.Bold, GraphicsUnit.Pixel))
+            using (var hintFont = new Font(FontFamily.GenericSansSerif, 15, FontStyle.Regular, GraphicsUnit.Pixel))
+            using (var format = new StringFormat())
+            {
+                format.Alignment = StringAlignment.Center;
+                format.LineAlignment = StringAlignment.Center;
+
+                e.Graphics.Clear(Color.Black);
+                e.Graphics.FillRectangle(dimBrush, ClientRectangle);
+
+                Rectangle area = ToClientRectangle(currentArea);
+                e.Graphics.FillRectangle(areaBrush, area);
+                e.Graphics.DrawRectangle(borderPen, area);
+
+                DrawGrid(e.Graphics, area, gridPen);
+                DrawCellLabels(e.Graphics, labelFont, labelBrush, format);
+                DrawHint(e.Graphics, area, hintFont, hintBrush, format);
+            }
+        }
+
+        private void SelectCell(int cellIndex)
+        {
+            currentArea = GetCellRectangle(currentArea, cellIndex);
+            depth++;
+
+            if (depth >= MaxDepth || currentArea.Width <= GridSize || currentArea.Height <= GridSize)
+            {
+                WarpAndClose();
+                return;
+            }
+
+            Invalidate();
+        }
+
+        private void ResetGrid()
+        {
+            currentArea = virtualScreen;
+            depth = 0;
+            Invalidate();
+        }
+
+        private void WarpAndClose()
+        {
+            Point center = CenterOf(currentArea);
+            Cursor.Position = center;
+            Close();
+        }
+
+        private void ClickAndClose(MouseClickKind clickKind)
+        {
+            Point center = CenterOf(currentArea);
+            Cursor.Position = center;
+            SendMouseClick(clickKind);
+            Close();
+        }
+
+        private static Point CenterOf(Rectangle rectangle)
+        {
+            return new Point(
+                rectangle.Left + rectangle.Width / 2,
+                rectangle.Top + rectangle.Height / 2);
+        }
+
+        private Rectangle ToClientRectangle(Rectangle screenRectangle)
+        {
+            return new Rectangle(
+                screenRectangle.Left - virtualScreen.Left,
+                screenRectangle.Top - virtualScreen.Top,
+                screenRectangle.Width,
+                screenRectangle.Height);
+        }
+
+        private static Rectangle GetCellRectangle(Rectangle area, int cellIndex)
+        {
+            int column = cellIndex % GridSize;
+            int row = cellIndex / GridSize;
+
+            int left = area.Left + area.Width * column / GridSize;
+            int right = area.Left + area.Width * (column + 1) / GridSize;
+            int top = area.Top + area.Height * row / GridSize;
+            int bottom = area.Top + area.Height * (row + 1) / GridSize;
+
+            if (right <= left)
+            {
+                right = left + 1;
+            }
+            if (bottom <= top)
+            {
+                bottom = top + 1;
+            }
+
+            return Rectangle.FromLTRB(left, top, right, bottom);
+        }
+
+        private static bool TryGetCellIndex(Keys key, out int cellIndex)
+        {
+            switch (key)
+            {
+                case Keys.Q:
+                    cellIndex = 0;
+                    return true;
+                case Keys.W:
+                    cellIndex = 1;
+                    return true;
+                case Keys.E:
+                    cellIndex = 2;
+                    return true;
+                case Keys.A:
+                    cellIndex = 3;
+                    return true;
+                case Keys.S:
+                    cellIndex = 4;
+                    return true;
+                case Keys.D:
+                    cellIndex = 5;
+                    return true;
+                case Keys.Z:
+                    cellIndex = 6;
+                    return true;
+                case Keys.X:
+                    cellIndex = 7;
+                    return true;
+                case Keys.C:
+                    cellIndex = 8;
+                    return true;
+            }
+
+            cellIndex = -1;
+            return false;
+        }
+
+        private void DrawGrid(Graphics graphics, Rectangle area, Pen gridPen)
+        {
+            for (int i = 1; i < GridSize; i++)
+            {
+                int x = area.Left + area.Width * i / GridSize;
+                int y = area.Top + area.Height * i / GridSize;
+
+                graphics.DrawLine(gridPen, x, area.Top, x, area.Bottom);
+                graphics.DrawLine(gridPen, area.Left, y, area.Right, y);
+            }
+        }
+
+        private void DrawCellLabels(Graphics graphics, Font font, Brush brush, StringFormat format)
+        {
+            for (int i = 0; i < CellLabels.Length; i++)
+            {
+                Rectangle cell = ToClientRectangle(GetCellRectangle(currentArea, i));
+                graphics.DrawString(CellLabels[i], font, brush, cell, format);
+            }
+        }
+
+        private void DrawHint(Graphics graphics, Rectangle area, Font font, Brush brush, StringFormat format)
+        {
+            string hint = "Grid mode: QWE/ASD/ZXC select, Enter jumps, M clicks, Esc cancels";
+            Rectangle hintArea = new Rectangle(area.Left, Math.Max(area.Top + 8, 8), area.Width, 24);
+            graphics.DrawString(hint, font, brush, hintArea, format);
+        }
+
+        private int LabelFontSize()
+        {
+            int smallestSide = Math.Min(currentArea.Width, currentArea.Height);
+            int size = smallestSide / 8;
+
+            if (size < 22)
+            {
+                return 22;
+            }
+            if (size > 64)
+            {
+                return 64;
+            }
+
+            return size;
+        }
+
+        private static void SendMouseClick(MouseClickKind clickKind)
+        {
+            switch (clickKind)
+            {
+                case MouseClickKind.Left:
+                    MouseEvent(MouseEventfLeftDown, MouseEventfLeftUp);
+                    break;
+                case MouseClickKind.Middle:
+                    MouseEvent(MouseEventfMiddleDown, MouseEventfMiddleUp);
+                    break;
+                case MouseClickKind.Right:
+                    MouseEvent(MouseEventfRightDown, MouseEventfRightUp);
+                    break;
+            }
+        }
+
+        private static void MouseEvent(uint down, uint up)
+        {
+            mouse_event(down, 0, 0, 0, UIntPtr.Zero);
+            mouse_event(up, 0, 0, 0, UIntPtr.Zero);
+        }
+
+        private enum MouseClickKind
+        {
+            Left,
+            Middle,
+            Right
+        }
+
+        private const uint MouseEventfLeftDown = 0x0002;
+        private const uint MouseEventfLeftUp = 0x0004;
+        private const uint MouseEventfRightDown = 0x0008;
+        private const uint MouseEventfRightUp = 0x0010;
+        private const uint MouseEventfMiddleDown = 0x0020;
+        private const uint MouseEventfMiddleUp = 0x0040;
+
+        [DllImport("user32.dll")]
+        private static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, UIntPtr dwExtraInfo);
     }
 
     internal static class TrayIconFactory
