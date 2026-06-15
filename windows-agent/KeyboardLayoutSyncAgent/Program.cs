@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -58,15 +59,16 @@ namespace KeyboardLayoutSyncAgent
 
     internal sealed class TrayAppContext : ApplicationContext
     {
-        private const int ForceResendIntervalMs = 1500;
         private const uint IdleRawHidPauseMs = 5000;
 
+        private readonly AgentDiagnostics diagnostics = new AgentDiagnostics();
         private readonly NotifyIcon notifyIcon;
         private readonly System.Windows.Forms.Timer timer;
         private readonly ToolStripMenuItem startupMenuItem;
         private readonly HotKeyWindow gridHotKeyWindow;
         private Icon currentIcon;
         private GridOverlayForm gridOverlayForm;
+        private DiagnosticsForm diagnosticsForm;
         private bool pausedForIdle;
         private KeyboardLayoutKind? lastSentLayout;
         private DateTime lastSentAt = DateTime.MinValue;
@@ -79,6 +81,7 @@ namespace KeyboardLayoutSyncAgent
             var menu = new ContextMenuStrip();
             menu.Items.Add("Sync now", null, delegate { SyncNow(true); });
             menu.Items.Add("Grid mode (Ctrl+Alt+G)", null, delegate { ShowGridMode(); });
+            menu.Items.Add("Diagnostics", null, delegate { ShowDiagnostics(); });
 
             startupMenuItem = new ToolStripMenuItem("Start with Windows");
             startupMenuItem.Checked = StartupManager.IsEnabled();
@@ -90,6 +93,7 @@ namespace KeyboardLayoutSyncAgent
             notifyIcon.DoubleClick += delegate { SyncNow(true); };
 
             SetStatus(AgentStatusKind.Warning, null, "Keyboard layout sync: starting");
+            SetLastAction("agent started", true);
 
             timer = new System.Windows.Forms.Timer();
             timer.Interval = 300;
@@ -112,6 +116,12 @@ namespace KeyboardLayoutSyncAgent
                     gridOverlayForm.Dispose();
                     gridOverlayForm = null;
                 }
+                if (diagnosticsForm != null)
+                {
+                    diagnosticsForm.Close();
+                    diagnosticsForm.Dispose();
+                    diagnosticsForm = null;
+                }
                 notifyIcon.Visible = false;
                 notifyIcon.Dispose();
                 if (currentIcon != null)
@@ -130,60 +140,84 @@ namespace KeyboardLayoutSyncAgent
             SetStatus(AgentStatusKind.Warning, lastSentLayout, enable
                 ? "Keyboard layout sync: autostart enabled"
                 : "Keyboard layout sync: autostart disabled");
+            SetLastAction(enable ? "autostart enabled" : "autostart disabled", true);
         }
 
         private void SyncNow(bool force)
         {
-            if (!force && WindowsIdle.IsIdleFor(IdleRawHidPauseMs))
+            uint idleMilliseconds;
+            bool hasIdle = WindowsIdle.TryGetIdleMilliseconds(out idleMilliseconds);
+            if (hasIdle)
+            {
+                diagnostics.IdleMilliseconds = idleMilliseconds;
+            }
+
+            if (!force && hasIdle && idleMilliseconds >= IdleRawHidPauseMs)
             {
                 if (!pausedForIdle)
                 {
                     pausedForIdle = true;
                     SetStatus(AgentStatusKind.Warning, lastSentLayout, "Keyboard layout sync: paused while Windows is idle");
+                    SetLastAction("paused: Windows idle " + idleMilliseconds + " ms", true);
+                }
+                else
+                {
+                    UpdateDiagnosticsTime();
                 }
                 return;
             }
 
+            if (pausedForIdle)
+            {
+                SetLastAction("resumed: Windows input returned after " + idleMilliseconds + " ms idle", true);
+            }
             pausedForIdle = false;
 
             KeyboardLayoutKind layout;
             if (!WindowsLayout.TryGetForegroundLayout(out layout))
             {
                 SetStatus(AgentStatusKind.Warning, null, "Keyboard layout sync: unsupported layout");
+                SetLastAction("skipped: unsupported foreground layout", true);
                 return;
             }
 
             if (!force &&
                 lastSentLayout.HasValue &&
-                lastSentLayout.Value == layout &&
-                (DateTime.UtcNow - lastSentAt).TotalMilliseconds < ForceResendIntervalMs)
+                lastSentLayout.Value == layout)
             {
+                SetLastAction("skipped: " + LayoutName(layout) + " is already synced", false);
                 return;
             }
 
             RawHidSendSummary summary = RawHidSender.SendLayout(layout);
+            SetLastSummary(summary);
             if (summary.Accepted > 0)
             {
                 MarkSent(layout);
                 SetStatus(AgentStatusKind.Synced, layout, "Keyboard layout sync: " + LayoutName(layout) + " accepted");
+                SetLastAction(SyncActionText(force, layout, "accepted", summary), true);
             }
             else if (summary.IgnoredTemporary > 0)
             {
                 MarkSent(layout);
                 SetStatus(AgentStatusKind.TemporaryIgnored, layout, "Keyboard layout sync: " + LayoutName(layout) + " ignored temporarily");
+                SetLastAction(SyncActionText(force, layout, "ignored temporarily", summary), true);
             }
             else if (summary.NoAck > 0)
             {
                 MarkSent(layout);
                 SetStatus(AgentStatusKind.Warning, layout, "Keyboard layout sync: " + LayoutName(layout) + " sent, no ack");
+                SetLastAction(SyncActionText(force, layout, "sent, no ack", summary), true);
             }
             else if (summary.DeviceCount > 0)
             {
                 SetStatus(AgentStatusKind.Error, layout, "Keyboard layout sync: Raw HID write failed");
+                SetLastAction(SyncActionText(force, layout, "write failed", summary), true);
             }
             else
             {
                 SetStatus(AgentStatusKind.Error, layout, "Keyboard layout sync: Moonlander Raw HID not found");
+                SetLastAction(SyncActionText(force, layout, "Raw HID not found", summary), true);
             }
         }
 
@@ -191,11 +225,18 @@ namespace KeyboardLayoutSyncAgent
         {
             lastSentLayout = layout;
             lastSentAt = DateTime.UtcNow;
+            diagnostics.LastSentLayout = layout;
+            diagnostics.LastSentAt = lastSentAt;
         }
 
         private void SetStatus(AgentStatusKind status, KeyboardLayoutKind? layout, string text)
         {
             notifyIcon.Text = text.Length <= 63 ? text : text.Substring(0, 63);
+            diagnostics.Status = status;
+            diagnostics.CurrentLayout = layout;
+            diagnostics.StatusText = text;
+            diagnostics.IsPausedForIdle = pausedForIdle;
+            UpdateDiagnosticsTime();
             SetIcon(status, layout);
         }
 
@@ -234,6 +275,55 @@ namespace KeyboardLayoutSyncAgent
             return layout == KeyboardLayoutKind.Russian ? "RU" : "EN";
         }
 
+        private void SetLastSummary(RawHidSendSummary summary)
+        {
+            diagnostics.DeviceCount = summary.DeviceCount;
+            diagnostics.Accepted = summary.Accepted;
+            diagnostics.IgnoredTemporary = summary.IgnoredTemporary;
+            diagnostics.UnknownCommand = summary.UnknownCommand;
+            diagnostics.UnknownLayout = summary.UnknownLayout;
+            diagnostics.NoAck = summary.NoAck;
+            diagnostics.Failed = summary.Failed;
+            UpdateDiagnosticsTime();
+        }
+
+        private void SetLastAction(string action, bool writeLog)
+        {
+            diagnostics.LastAction = action;
+            diagnostics.LogPath = AgentLog.LogPath;
+            UpdateDiagnosticsTime();
+
+            if (writeLog)
+            {
+                AgentLog.Write(action);
+            }
+        }
+
+        private void UpdateDiagnosticsTime()
+        {
+            diagnostics.UpdatedAt = DateTime.Now;
+        }
+
+        private AgentDiagnostics GetDiagnosticsSnapshot()
+        {
+            uint idleMilliseconds;
+            if (WindowsIdle.TryGetIdleMilliseconds(out idleMilliseconds))
+            {
+                diagnostics.IdleMilliseconds = idleMilliseconds;
+            }
+
+            diagnostics.IsPausedForIdle = pausedForIdle;
+            diagnostics.LogPath = AgentLog.LogPath;
+            UpdateDiagnosticsTime();
+            return diagnostics.Clone();
+        }
+
+        private static string SyncActionText(bool force, KeyboardLayoutKind layout, string result, RawHidSendSummary summary)
+        {
+            return (force ? "manual" : "timer") + " sync " + LayoutName(layout) + ": " +
+                result + " (" + summary.ToCompactString() + ")";
+        }
+
         private void ShowGridMode()
         {
             if (gridOverlayForm != null && !gridOverlayForm.IsDisposed)
@@ -245,6 +335,269 @@ namespace KeyboardLayoutSyncAgent
             gridOverlayForm = new GridOverlayForm();
             gridOverlayForm.FormClosed += delegate { gridOverlayForm = null; };
             gridOverlayForm.Show();
+            SetLastAction("grid mode opened", true);
+        }
+
+        private void ShowDiagnostics()
+        {
+            if (diagnosticsForm != null && !diagnosticsForm.IsDisposed)
+            {
+                diagnosticsForm.Activate();
+                return;
+            }
+
+            diagnosticsForm = new DiagnosticsForm(delegate { return GetDiagnosticsSnapshot(); });
+            diagnosticsForm.FormClosed += delegate { diagnosticsForm = null; };
+            diagnosticsForm.Show();
+            SetLastAction("diagnostics opened", true);
+        }
+    }
+
+    internal sealed class AgentDiagnostics
+    {
+        public DateTime StartedAt = DateTime.Now;
+        public DateTime UpdatedAt = DateTime.Now;
+        public AgentStatusKind Status = AgentStatusKind.Warning;
+        public KeyboardLayoutKind? CurrentLayout;
+        public KeyboardLayoutKind? LastSentLayout;
+        public DateTime LastSentAt = DateTime.MinValue;
+        public string StatusText = "starting";
+        public string LastAction = "starting";
+        public string LogPath = AgentLog.LogPath;
+        public uint IdleMilliseconds;
+        public bool IsPausedForIdle;
+        public int DeviceCount;
+        public int Accepted;
+        public int IgnoredTemporary;
+        public int UnknownCommand;
+        public int UnknownLayout;
+        public int NoAck;
+        public int Failed;
+
+        public AgentDiagnostics Clone()
+        {
+            AgentDiagnostics clone = new AgentDiagnostics();
+            clone.StartedAt = StartedAt;
+            clone.UpdatedAt = UpdatedAt;
+            clone.Status = Status;
+            clone.CurrentLayout = CurrentLayout;
+            clone.LastSentLayout = LastSentLayout;
+            clone.LastSentAt = LastSentAt;
+            clone.StatusText = StatusText;
+            clone.LastAction = LastAction;
+            clone.LogPath = LogPath;
+            clone.IdleMilliseconds = IdleMilliseconds;
+            clone.IsPausedForIdle = IsPausedForIdle;
+            clone.DeviceCount = DeviceCount;
+            clone.Accepted = Accepted;
+            clone.IgnoredTemporary = IgnoredTemporary;
+            clone.UnknownCommand = UnknownCommand;
+            clone.UnknownLayout = UnknownLayout;
+            clone.NoAck = NoAck;
+            clone.Failed = Failed;
+            return clone;
+        }
+    }
+
+    internal sealed class DiagnosticsForm : Form
+    {
+        private readonly Func<AgentDiagnostics> snapshotProvider;
+        private readonly TextBox textBox;
+        private readonly System.Windows.Forms.Timer refreshTimer;
+
+        public DiagnosticsForm(Func<AgentDiagnostics> snapshotProvider)
+        {
+            this.snapshotProvider = snapshotProvider;
+
+            Text = "Keyboard Layout Sync Diagnostics";
+            Width = 760;
+            Height = 560;
+            StartPosition = FormStartPosition.CenterScreen;
+
+            textBox = new TextBox();
+            textBox.Dock = DockStyle.Fill;
+            textBox.Multiline = true;
+            textBox.ReadOnly = true;
+            textBox.ScrollBars = ScrollBars.Both;
+            textBox.WordWrap = false;
+            textBox.Font = new Font(FontFamily.GenericMonospace, 9, FontStyle.Regular, GraphicsUnit.Point);
+            Controls.Add(textBox);
+
+            refreshTimer = new System.Windows.Forms.Timer();
+            refreshTimer.Interval = 1000;
+            refreshTimer.Tick += delegate { RefreshText(); };
+            refreshTimer.Start();
+
+            RefreshText();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                refreshTimer.Dispose();
+                textBox.Dispose();
+            }
+
+            base.Dispose(disposing);
+        }
+
+        private void RefreshText()
+        {
+            string text = BuildText(snapshotProvider());
+            if (textBox.Text != text)
+            {
+                textBox.Text = text;
+                textBox.SelectionStart = 0;
+                textBox.SelectionLength = 0;
+            }
+        }
+
+        private static string BuildText(AgentDiagnostics diagnostics)
+        {
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine("Keyboard Layout Sync Agent");
+            builder.AppendLine();
+            builder.AppendLine("Status:          " + diagnostics.Status + " - " + diagnostics.StatusText);
+            builder.AppendLine("Current layout:  " + LayoutText(diagnostics.CurrentLayout));
+            builder.AppendLine("Last sent:       " + LayoutText(diagnostics.LastSentLayout) + " at " + DateText(diagnostics.LastSentAt));
+            builder.AppendLine("Windows idle:    " + IdleText(diagnostics.IdleMilliseconds));
+            builder.AppendLine("Idle pause:      " + (diagnostics.IsPausedForIdle ? "yes" : "no"));
+            builder.AppendLine("Last action:     " + diagnostics.LastAction);
+            builder.AppendLine("Updated:         " + DateText(diagnostics.UpdatedAt));
+            builder.AppendLine("Started:         " + DateText(diagnostics.StartedAt));
+            builder.AppendLine();
+            builder.AppendLine("Raw HID last summary");
+            builder.AppendLine("Devices:         " + diagnostics.DeviceCount);
+            builder.AppendLine("Accepted:        " + diagnostics.Accepted);
+            builder.AppendLine("Ignored temp:    " + diagnostics.IgnoredTemporary);
+            builder.AppendLine("No ACK:          " + diagnostics.NoAck);
+            builder.AppendLine("Failed:          " + diagnostics.Failed);
+            builder.AppendLine("Unknown command: " + diagnostics.UnknownCommand);
+            builder.AppendLine("Unknown layout:  " + diagnostics.UnknownLayout);
+            builder.AppendLine();
+            builder.AppendLine("Log file:        " + diagnostics.LogPath);
+            builder.AppendLine();
+            builder.AppendLine("Recent log");
+            builder.AppendLine(AgentLog.ReadTail(24));
+            return builder.ToString();
+        }
+
+        private static string LayoutText(KeyboardLayoutKind? layout)
+        {
+            if (!layout.HasValue)
+            {
+                return "-";
+            }
+
+            return layout.Value == KeyboardLayoutKind.Russian ? "RU" : "EN";
+        }
+
+        private static string IdleText(uint milliseconds)
+        {
+            return (milliseconds / 1000.0).ToString("0.0") + " s (" + milliseconds + " ms)";
+        }
+
+        private static string DateText(DateTime dateTime)
+        {
+            if (dateTime == DateTime.MinValue)
+            {
+                return "-";
+            }
+
+            return dateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
+        }
+    }
+
+    internal static class AgentLog
+    {
+        private const long MaxLogBytes = 512 * 1024;
+        private static readonly object SyncRoot = new object();
+        private static readonly string logPath = BuildLogPath();
+
+        public static string LogPath
+        {
+            get { return logPath; }
+        }
+
+        public static void Write(string message)
+        {
+            try
+            {
+                lock (SyncRoot)
+                {
+                    string directory = Path.GetDirectoryName(logPath);
+                    if (!Directory.Exists(directory))
+                    {
+                        Directory.CreateDirectory(directory);
+                    }
+
+                    RotateIfNeeded();
+                    File.AppendAllText(
+                        logPath,
+                        DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + " " + message + Environment.NewLine,
+                        Encoding.UTF8);
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        public static string ReadTail(int maxLines)
+        {
+            try
+            {
+                lock (SyncRoot)
+                {
+                    if (!File.Exists(logPath))
+                    {
+                        return "(log is empty)";
+                    }
+
+                    string[] lines = File.ReadAllLines(logPath, Encoding.UTF8);
+                    int start = Math.Max(0, lines.Length - maxLines);
+                    StringBuilder builder = new StringBuilder();
+                    for (int i = start; i < lines.Length; i++)
+                    {
+                        builder.AppendLine(lines[i]);
+                    }
+
+                    return builder.ToString();
+                }
+            }
+            catch
+            {
+                return "(log is unavailable)";
+            }
+        }
+
+        private static string BuildLogPath()
+        {
+            string directory = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            if (string.IsNullOrEmpty(directory))
+            {
+                directory = Application.StartupPath;
+            }
+
+            return Path.Combine(Path.Combine(directory, "KeyboardLayoutSyncAgent"), "agent.log");
+        }
+
+        private static void RotateIfNeeded()
+        {
+            FileInfo info = new FileInfo(logPath);
+            if (!info.Exists || info.Length < MaxLogBytes)
+            {
+                return;
+            }
+
+            string oldPath = logPath + ".old";
+            if (File.Exists(oldPath))
+            {
+                File.Delete(oldPath);
+            }
+
+            File.Move(logPath, oldPath);
         }
     }
 
@@ -736,7 +1089,7 @@ namespace KeyboardLayoutSyncAgent
                 idleMilliseconds >= milliseconds;
         }
 
-        private static bool TryGetIdleMilliseconds(out uint idleMilliseconds)
+        public static bool TryGetIdleMilliseconds(out uint idleMilliseconds)
         {
             LastInputInfo info = new LastInputInfo();
             info.cbSize = (uint)Marshal.SizeOf(typeof(LastInputInfo));
@@ -798,6 +1151,17 @@ namespace KeyboardLayoutSyncAgent
                     Failed++;
                     break;
             }
+        }
+
+        public string ToCompactString()
+        {
+            return "devices=" + DeviceCount +
+                ", accepted=" + Accepted +
+                ", ignored=" + IgnoredTemporary +
+                ", noAck=" + NoAck +
+                ", failed=" + Failed +
+                ", unknownCommand=" + UnknownCommand +
+                ", unknownLayout=" + UnknownLayout;
         }
     }
 

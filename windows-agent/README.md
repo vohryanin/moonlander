@@ -2,7 +2,7 @@
 
 Маленький Windows tray-agent для синхронизации языка ОС с внутренним языком клавиатуры.
 
-Агент раз в 300 мс смотрит язык активного окна Windows:
+Агент раз в 300 мс смотрит язык активного окна Windows, но отправляет Raw HID-пакет только при смене языка или при ручном `Sync now`:
 
 - английский язык отправляет в клавиатуру как `EN`
 - русский язык отправляет в клавиатуру как `RU`
@@ -33,7 +33,7 @@ windows-agent\KeyboardLayoutSyncAgent\bin\KeyboardLayoutSyncAgent.exe
 
 Запустить `KeyboardLayoutSyncAgent.exe`. В трее появится иконка `Keyboard layout sync`.
 
-Двойной клик по иконке делает принудительную синхронизацию. В меню иконки есть `Sync now`, `Grid mode (Ctrl+Alt+G)`, `Start with Windows` и `Exit`.
+Двойной клик по иконке делает принудительную синхронизацию. В меню иконки есть `Sync now`, `Grid mode (Ctrl+Alt+G)`, `Diagnostics`, `Start with Windows` и `Exit`.
 
 `Grid mode` открывает полноэкранную сетку для быстрого позиционирования курсора:
 
@@ -47,6 +47,27 @@ windows-agent\KeyboardLayoutSyncAgent\bin\KeyboardLayoutSyncAgent.exe
 - `Esc` закрывает сетку без перемещения курсора
 
 Если в подсказке написано `Raw HID not found`, значит клавиатура еще не прошита версией с `RAW_ENABLE = yes`, либо Windows пока не увидела Raw HID endpoint.
+
+## Диагностика
+
+Пункт `Diagnostics` открывает живое окно состояния агента. В нем видно:
+
+- текущий статус синхронизации
+- текущий язык активного окна
+- время последней Raw HID-отправки
+- сколько миллисекунд Windows находится в простое
+- включена ли idle-пауза
+- сколько Raw HID устройств найдено
+- последний ACK-результат
+- последние строки лога
+
+Лог пишется сюда:
+
+```text
+%LOCALAPPDATA%\KeyboardLayoutSyncAgent\agent.log
+```
+
+Когда лог достигает примерно 512 KiB, агент переносит его в `agent.log.old` и начинает новый файл.
 
 ## Статусы
 
