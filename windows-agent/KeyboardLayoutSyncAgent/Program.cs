@@ -80,6 +80,7 @@ namespace KeyboardLayoutSyncAgent
 
             var menu = new ContextMenuStrip();
             menu.Items.Add("Sync now", null, delegate { SyncNow(true); });
+            menu.Items.Add("Refresh telemetry", null, delegate { RefreshTelemetry(); });
             menu.Items.Add("Grid mode (Ctrl+Alt+G)", null, delegate { ShowGridMode(); });
             menu.Items.Add("Diagnostics", null, delegate { ShowDiagnostics(); });
 
@@ -284,6 +285,10 @@ namespace KeyboardLayoutSyncAgent
             diagnostics.UnknownLayout = summary.UnknownLayout;
             diagnostics.NoAck = summary.NoAck;
             diagnostics.Failed = summary.Failed;
+            if (summary.Telemetry != null && summary.Telemetry.HasData)
+            {
+                diagnostics.Telemetry = summary.Telemetry.Clone();
+            }
             UpdateDiagnosticsTime();
         }
 
@@ -322,6 +327,59 @@ namespace KeyboardLayoutSyncAgent
         {
             return (force ? "manual" : "timer") + " sync " + LayoutName(layout) + ": " +
                 result + " (" + summary.ToCompactString() + ")";
+        }
+
+        private void RefreshTelemetry()
+        {
+            RawHidSendSummary summary = RawHidSender.RequestTelemetry();
+            SetLastSummary(summary);
+
+            KeyboardLayoutKind? layout = TelemetryLayout(summary.Telemetry);
+            if (!layout.HasValue)
+            {
+                layout = lastSentLayout;
+            }
+
+            if (summary.Accepted > 0)
+            {
+                SetStatus(AgentStatusKind.Synced, layout, "Keyboard telemetry: accepted");
+                SetLastAction("manual telemetry: accepted (" + summary.ToCompactString() + ")", true);
+            }
+            else if (summary.NoAck > 0)
+            {
+                SetStatus(AgentStatusKind.Warning, layout, "Keyboard telemetry: sent, no ack");
+                SetLastAction("manual telemetry: sent, no ack (" + summary.ToCompactString() + ")", true);
+            }
+            else if (summary.DeviceCount > 0)
+            {
+                SetStatus(AgentStatusKind.Error, layout, "Keyboard telemetry: Raw HID write failed");
+                SetLastAction("manual telemetry: write failed (" + summary.ToCompactString() + ")", true);
+            }
+            else
+            {
+                SetStatus(AgentStatusKind.Error, layout, "Keyboard telemetry: Moonlander Raw HID not found");
+                SetLastAction("manual telemetry: Raw HID not found", true);
+            }
+        }
+
+        private static KeyboardLayoutKind? TelemetryLayout(KeyboardTelemetry telemetry)
+        {
+            if (telemetry == null || !telemetry.HasData)
+            {
+                return null;
+            }
+
+            if (telemetry.LangShouldBe == (int)KeyboardLayoutKind.Russian)
+            {
+                return KeyboardLayoutKind.Russian;
+            }
+
+            if (telemetry.LangShouldBe == (int)KeyboardLayoutKind.English)
+            {
+                return KeyboardLayoutKind.English;
+            }
+
+            return null;
         }
 
         private void ShowGridMode()
@@ -373,6 +431,7 @@ namespace KeyboardLayoutSyncAgent
         public int UnknownLayout;
         public int NoAck;
         public int Failed;
+        public KeyboardTelemetry Telemetry = new KeyboardTelemetry();
 
         public AgentDiagnostics Clone()
         {
@@ -395,6 +454,7 @@ namespace KeyboardLayoutSyncAgent
             clone.UnknownLayout = UnknownLayout;
             clone.NoAck = NoAck;
             clone.Failed = Failed;
+            clone.Telemetry = Telemetry == null ? new KeyboardTelemetry() : Telemetry.Clone();
             return clone;
         }
     }
@@ -476,11 +536,39 @@ namespace KeyboardLayoutSyncAgent
             builder.AppendLine("Unknown command: " + diagnostics.UnknownCommand);
             builder.AppendLine("Unknown layout:  " + diagnostics.UnknownLayout);
             builder.AppendLine();
+            AppendTelemetry(builder, diagnostics.Telemetry);
+            builder.AppendLine();
             builder.AppendLine("Log file:        " + diagnostics.LogPath);
             builder.AppendLine();
             builder.AppendLine("Recent log");
             builder.AppendLine(AgentLog.ReadTail(24));
             return builder.ToString();
+        }
+
+        private static void AppendTelemetry(StringBuilder builder, KeyboardTelemetry telemetry)
+        {
+            builder.AppendLine("Keyboard telemetry");
+            if (telemetry == null || !telemetry.HasData)
+            {
+                builder.AppendLine("(no telemetry yet)");
+                return;
+            }
+
+            builder.AppendLine("Received:        " + DateText(telemetry.ReceivedAt));
+            builder.AppendLine("Command/status:  " + telemetry.Command + " / " + telemetry.Status);
+            builder.AppendLine("Lang should/current: " + LangText(telemetry.LangShouldBe) + " / " + LangText(telemetry.LangCurrent));
+            builder.AppendLine("Highest layer:   " + telemetry.HighestLayer);
+            builder.AppendLine("Layer state:     0x" + telemetry.LayerState.ToString("X8"));
+            builder.AppendLine("Lighting idle:   " + (telemetry.LightingIdleSleeping ? "sleeping" : "awake"));
+            builder.AppendLine("RGB enabled:     " + (telemetry.RgbEnabled ? "yes" : "no"));
+            builder.AppendLine("Mouse dirs:      " + telemetry.MouseDirectionsText());
+            builder.AppendLine("Mouse flags:     " + telemetry.MouseFlagsText());
+            builder.AppendLine("Mouse velocity:  " + telemetry.MouseVelocityText());
+            builder.AppendLine("Shift should/current: " + telemetry.ShiftShouldBe + " / " + telemetry.ShiftCurrent);
+            builder.AppendLine("Pressed counts:  lang=" + telemetry.LangPressedCount +
+                ", shift=" + telemetry.ShiftPressedCount +
+                ", langShift=" + telemetry.LangShiftPressedCount +
+                ", comboStack=" + telemetry.ComboStackSize);
         }
 
         private static string LayoutText(KeyboardLayoutKind? layout)
@@ -491,6 +579,20 @@ namespace KeyboardLayoutSyncAgent
             }
 
             return layout.Value == KeyboardLayoutKind.Russian ? "RU" : "EN";
+        }
+
+        private static string LangText(int lang)
+        {
+            if (lang == (int)KeyboardLayoutKind.Russian)
+            {
+                return "RU";
+            }
+            if (lang == (int)KeyboardLayoutKind.English)
+            {
+                return "EN";
+            }
+
+            return lang.ToString();
         }
 
         private static string IdleText(uint milliseconds)
@@ -1118,6 +1220,153 @@ namespace KeyboardLayoutSyncAgent
         }
     }
 
+    internal sealed class KeyboardTelemetry
+    {
+        public bool HasData;
+        public DateTime ReceivedAt = DateTime.MinValue;
+        public int Command;
+        public int Layout;
+        public int Status;
+        public int LangShouldBe;
+        public int LangCurrent;
+        public int HighestLayer;
+        public uint LayerState;
+        public bool LightingIdleSleeping;
+        public bool RgbEnabled;
+        public int MouseDirections;
+        public int MouseFlags;
+        public int MouseVelocityX;
+        public int MouseVelocityY;
+        public int MouseScale;
+        public int ShiftShouldBe;
+        public int ShiftCurrent;
+        public int LangPressedCount;
+        public int ShiftPressedCount;
+        public int LangShiftPressedCount;
+        public int ComboStackSize;
+        public int TelemetryVersion;
+
+        public KeyboardTelemetry Clone()
+        {
+            KeyboardTelemetry clone = new KeyboardTelemetry();
+            clone.HasData = HasData;
+            clone.ReceivedAt = ReceivedAt;
+            clone.Command = Command;
+            clone.Layout = Layout;
+            clone.Status = Status;
+            clone.LangShouldBe = LangShouldBe;
+            clone.LangCurrent = LangCurrent;
+            clone.HighestLayer = HighestLayer;
+            clone.LayerState = LayerState;
+            clone.LightingIdleSleeping = LightingIdleSleeping;
+            clone.RgbEnabled = RgbEnabled;
+            clone.MouseDirections = MouseDirections;
+            clone.MouseFlags = MouseFlags;
+            clone.MouseVelocityX = MouseVelocityX;
+            clone.MouseVelocityY = MouseVelocityY;
+            clone.MouseScale = MouseScale;
+            clone.ShiftShouldBe = ShiftShouldBe;
+            clone.ShiftCurrent = ShiftCurrent;
+            clone.LangPressedCount = LangPressedCount;
+            clone.ShiftPressedCount = ShiftPressedCount;
+            clone.LangShiftPressedCount = LangShiftPressedCount;
+            clone.ComboStackSize = ComboStackSize;
+            clone.TelemetryVersion = TelemetryVersion;
+            return clone;
+        }
+
+        public string MouseDirectionsText()
+        {
+            StringBuilder builder = new StringBuilder();
+            AppendDirection(builder, 1, "down");
+            AppendDirection(builder, 2, "up");
+            AppendDirection(builder, 4, "left");
+            AppendDirection(builder, 8, "right");
+            return builder.Length == 0 ? "none" : builder.ToString();
+        }
+
+        public string MouseFlagsText()
+        {
+            StringBuilder builder = new StringBuilder();
+            AppendFlag(builder, 1, "precision");
+            AppendFlag(builder, 2, "boost");
+            AppendFlag(builder, 4, "large-active");
+            AppendFlag(builder, 8, "velocity");
+            return builder.Length == 0 ? "none" : builder.ToString();
+        }
+
+        public string MouseVelocityText()
+        {
+            if (MouseScale <= 0)
+            {
+                return MouseVelocityX + " / " + MouseVelocityY + " raw";
+            }
+
+            double x = (double)MouseVelocityX / MouseScale;
+            double y = (double)MouseVelocityY / MouseScale;
+            return x.ToString("0.00") + " / " + y.ToString("0.00") +
+                " px/tick (" + MouseVelocityX + " / " + MouseVelocityY + " raw)";
+        }
+
+        public string ToCompactString()
+        {
+            if (!HasData)
+            {
+                return "telemetry=no";
+            }
+
+            return "telemetry=yes, layer=" + HighestLayer +
+                ", lang=" + LangShouldBe + "/" + LangCurrent +
+                ", idle=" + (LightingIdleSleeping ? "sleep" : "awake") +
+                ", mouseDirs=" + MouseDirections +
+                ", mouseFlags=" + MouseFlags;
+        }
+
+        private void AppendDirection(StringBuilder builder, int bit, string text)
+        {
+            if ((MouseDirections & bit) == 0)
+            {
+                return;
+            }
+
+            AppendWord(builder, text);
+        }
+
+        private void AppendFlag(StringBuilder builder, int bit, string text)
+        {
+            if ((MouseFlags & bit) == 0)
+            {
+                return;
+            }
+
+            AppendWord(builder, text);
+        }
+
+        private static void AppendWord(StringBuilder builder, string text)
+        {
+            if (builder.Length > 0)
+            {
+                builder.Append(", ");
+            }
+
+            builder.Append(text);
+        }
+    }
+
+    internal sealed class RawHidResponse
+    {
+        public HostLangSyncStatus Status;
+        public KeyboardTelemetry Telemetry;
+
+        public static RawHidResponse FromStatus(HostLangSyncStatus status)
+        {
+            RawHidResponse response = new RawHidResponse();
+            response.Status = status;
+            response.Telemetry = new KeyboardTelemetry();
+            return response;
+        }
+    }
+
     internal sealed class RawHidSendSummary
     {
         public int DeviceCount;
@@ -1127,6 +1376,7 @@ namespace KeyboardLayoutSyncAgent
         public int UnknownLayout;
         public int NoAck;
         public int Failed;
+        public KeyboardTelemetry Telemetry;
 
         public void Add(HostLangSyncStatus status)
         {
@@ -1153,6 +1403,21 @@ namespace KeyboardLayoutSyncAgent
             }
         }
 
+        public void Add(RawHidResponse response)
+        {
+            if (response == null)
+            {
+                Add(HostLangSyncStatus.WriteFailed);
+                return;
+            }
+
+            Add(response.Status);
+            if (response.Telemetry != null && response.Telemetry.HasData)
+            {
+                Telemetry = response.Telemetry.Clone();
+            }
+        }
+
         public string ToCompactString()
         {
             return "devices=" + DeviceCount +
@@ -1161,7 +1426,8 @@ namespace KeyboardLayoutSyncAgent
                 ", noAck=" + NoAck +
                 ", failed=" + Failed +
                 ", unknownCommand=" + UnknownCommand +
-                ", unknownLayout=" + UnknownLayout;
+                ", unknownLayout=" + UnknownLayout +
+                ", " + (Telemetry == null ? "telemetry=no" : Telemetry.ToCompactString());
         }
     }
 
@@ -1172,6 +1438,8 @@ namespace KeyboardLayoutSyncAgent
         private const int HidpStatusSuccess = 0x00110000;
         private const int HostLangSyncPacketSize = 32;
         private const int AckReadTimeoutMs = 120;
+        private const byte HostLangSyncSetLayout = 1;
+        private const byte HostLangSyncGetStatus = 2;
 
         private const uint DigcfPresent = 0x00000002;
         private const uint DigcfDeviceInterface = 0x00000010;
@@ -1194,6 +1462,20 @@ namespace KeyboardLayoutSyncAgent
             for (int i = 0; i < devices.Count; i++)
             {
                 summary.Add(TrySendLayout(devices[i], layout));
+            }
+
+            return summary;
+        }
+
+        public static RawHidSendSummary RequestTelemetry()
+        {
+            var summary = new RawHidSendSummary();
+            List<HidDeviceInfo> devices = FindRawHidDevices();
+            summary.DeviceCount = devices.Count;
+
+            for (int i = 0; i < devices.Count; i++)
+            {
+                summary.Add(TrySendPacket(devices[i], CreateStatusPacket()));
             }
 
             return summary;
@@ -1296,34 +1578,39 @@ namespace KeyboardLayoutSyncAgent
             }
         }
 
-        private static HostLangSyncStatus TrySendLayout(HidDeviceInfo device, KeyboardLayoutKind layout)
+        private static RawHidResponse TrySendLayout(HidDeviceInfo device, KeyboardLayoutKind layout)
+        {
+            return TrySendPacket(device, CreateLayoutPacket(layout));
+        }
+
+        private static RawHidResponse TrySendPacket(HidDeviceInfo device, byte[] payload)
         {
             using (SafeFileHandle handle = OpenDevice(device.Path, GenericRead | GenericWrite))
             {
                 if (handle == null || handle.IsInvalid)
                 {
-                    return TrySendLayoutWithoutAck(device, layout)
-                        ? HostLangSyncStatus.NoAck
-                        : HostLangSyncStatus.WriteFailed;
+                    return TrySendPacketWithoutAck(device, payload)
+                        ? RawHidResponse.FromStatus(HostLangSyncStatus.NoAck)
+                        : RawHidResponse.FromStatus(HostLangSyncStatus.WriteFailed);
                 }
 
-                byte[] report = CreateOutputReport(device, layout);
+                byte[] report = CreateOutputReport(device, payload);
                 if (!TryWriteReport(handle, report))
                 {
-                    return HostLangSyncStatus.WriteFailed;
+                    return RawHidResponse.FromStatus(HostLangSyncStatus.WriteFailed);
                 }
 
-                HostLangSyncStatus status;
-                if (TryReadAck(handle, device, out status))
+                RawHidResponse response;
+                if (TryReadAck(handle, device, out response))
                 {
-                    return status;
+                    return response;
                 }
 
-                return HostLangSyncStatus.NoAck;
+                return RawHidResponse.FromStatus(HostLangSyncStatus.NoAck);
             }
         }
 
-        private static bool TrySendLayoutWithoutAck(HidDeviceInfo device, KeyboardLayoutKind layout)
+        private static bool TrySendPacketWithoutAck(HidDeviceInfo device, byte[] payload)
         {
             using (SafeFileHandle handle = OpenDevice(device.Path, GenericWrite))
             {
@@ -1332,13 +1619,12 @@ namespace KeyboardLayoutSyncAgent
                     return false;
                 }
 
-                return TryWriteReport(handle, CreateOutputReport(device, layout));
+                return TryWriteReport(handle, CreateOutputReport(device, payload));
             }
         }
 
-        private static byte[] CreateOutputReport(HidDeviceInfo device, KeyboardLayoutKind layout)
+        private static byte[] CreateOutputReport(HidDeviceInfo device, byte[] payload)
         {
-            byte[] payload = CreateLayoutPacket(layout);
             int reportLength = Math.Max(device.OutputReportByteLength, payload.Length + 1);
             byte[] report = new byte[reportLength];
 
@@ -1359,7 +1645,7 @@ namespace KeyboardLayoutSyncAgent
             return HidD_SetOutputReport(handle, report, (uint)report.Length);
         }
 
-        private static bool TryReadAck(SafeFileHandle handle, HidDeviceInfo device, out HostLangSyncStatus status)
+        private static bool TryReadAck(SafeFileHandle handle, HidDeviceInfo device, out RawHidResponse response)
         {
             int reportLength = Math.Max(device.InputReportByteLength, HostLangSyncPacketSize + 1);
             byte[] input = new byte[reportLength];
@@ -1384,20 +1670,20 @@ namespace KeyboardLayoutSyncAgent
             {
                 handle.Dispose();
                 readThread.Join(50);
-                status = HostLangSyncStatus.NoAck;
+                response = RawHidResponse.FromStatus(HostLangSyncStatus.NoAck);
                 return false;
             }
 
             if (!readOk || bytesRead == 0)
             {
-                status = HostLangSyncStatus.NoAck;
+                response = RawHidResponse.FromStatus(HostLangSyncStatus.NoAck);
                 return false;
             }
 
-            return TryParseAck(input, (int)bytesRead, out status);
+            return TryParseAck(input, (int)bytesRead, out response);
         }
 
-        private static bool TryParseAck(byte[] report, int length, out HostLangSyncStatus status)
+        private static bool TryParseAck(byte[] report, int length, out RawHidResponse response)
         {
             for (int offset = 0; offset <= 1; offset++)
             {
@@ -1408,13 +1694,68 @@ namespace KeyboardLayoutSyncAgent
                     report[offset + 3] == (byte)'G' &&
                     report[offset + 4] == 1)
                 {
-                    status = (HostLangSyncStatus)report[offset + 7];
+                    response = new RawHidResponse();
+                    response.Status = (HostLangSyncStatus)report[offset + 7];
+                    response.Telemetry = ParseTelemetry(report, length, offset);
                     return true;
                 }
             }
 
-            status = HostLangSyncStatus.NoAck;
+            response = RawHidResponse.FromStatus(HostLangSyncStatus.NoAck);
             return false;
+        }
+
+        private static KeyboardTelemetry ParseTelemetry(byte[] report, int length, int offset)
+        {
+            KeyboardTelemetry telemetry = new KeyboardTelemetry();
+            if (length < offset + 31)
+            {
+                return telemetry;
+            }
+
+            if (report[offset + 29] == 0)
+            {
+                return telemetry;
+            }
+
+            telemetry.HasData = true;
+            telemetry.ReceivedAt = DateTime.Now;
+            telemetry.Command = report[offset + 5];
+            telemetry.Layout = report[offset + 6];
+            telemetry.Status = report[offset + 7];
+            telemetry.LangShouldBe = report[offset + 8];
+            telemetry.LangCurrent = report[offset + 9];
+            telemetry.HighestLayer = report[offset + 10];
+            telemetry.LayerState = ReadUInt32(report, offset + 11);
+            telemetry.LightingIdleSleeping = report[offset + 15] != 0;
+            telemetry.RgbEnabled = report[offset + 16] != 0;
+            telemetry.MouseDirections = report[offset + 17];
+            telemetry.MouseFlags = report[offset + 18];
+            telemetry.MouseVelocityX = ReadInt16(report, offset + 19);
+            telemetry.MouseVelocityY = ReadInt16(report, offset + 21);
+            telemetry.ShiftShouldBe = report[offset + 23];
+            telemetry.ShiftCurrent = report[offset + 24];
+            telemetry.LangPressedCount = report[offset + 25];
+            telemetry.ShiftPressedCount = report[offset + 26];
+            telemetry.ComboStackSize = report[offset + 27];
+            telemetry.MouseScale = report[offset + 28];
+            telemetry.TelemetryVersion = report[offset + 29];
+            telemetry.LangShiftPressedCount = report[offset + 30];
+            return telemetry;
+        }
+
+        private static uint ReadUInt32(byte[] data, int offset)
+        {
+            return (uint)data[offset] |
+                ((uint)data[offset + 1] << 8) |
+                ((uint)data[offset + 2] << 16) |
+                ((uint)data[offset + 3] << 24);
+        }
+
+        private static int ReadInt16(byte[] data, int offset)
+        {
+            ushort value = (ushort)(data[offset] | (data[offset + 1] << 8));
+            return (short)value;
         }
 
         private static byte[] CreateLayoutPacket(KeyboardLayoutKind layout)
@@ -1425,8 +1766,21 @@ namespace KeyboardLayoutSyncAgent
             packet[2] = (byte)'N';
             packet[3] = (byte)'G';
             packet[4] = 1;
-            packet[5] = 1;
+            packet[5] = HostLangSyncSetLayout;
             packet[6] = (byte)layout;
+            return packet;
+        }
+
+        private static byte[] CreateStatusPacket()
+        {
+            byte[] packet = new byte[HostLangSyncPacketSize];
+            packet[0] = (byte)'M';
+            packet[1] = (byte)'L';
+            packet[2] = (byte)'N';
+            packet[3] = (byte)'G';
+            packet[4] = 1;
+            packet[5] = HostLangSyncGetStatus;
+            packet[6] = 0;
             return packet;
         }
 

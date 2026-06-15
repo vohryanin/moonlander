@@ -726,6 +726,7 @@ void keyboard_post_init_user(void) {
 
 enum host_lang_sync_command {
   HOST_LANG_SYNC_SET_LAYOUT = 1,
+  HOST_LANG_SYNC_GET_STATUS = 2,
 };
 
 enum host_lang_sync_layout {
@@ -762,6 +763,41 @@ static uint8_t host_lang_sync_status_for_result(enum LangHostSyncResult result) 
   return HOST_LANG_SYNC_UNKNOWN_LAYOUT;
 }
 
+static void host_lang_sync_write_u32(uint8_t *data, uint8_t offset, uint32_t value) {
+  data[offset] = (uint8_t)(value & 0xff);
+  data[offset + 1] = (uint8_t)((value >> 8) & 0xff);
+  data[offset + 2] = (uint8_t)((value >> 16) & 0xff);
+  data[offset + 3] = (uint8_t)((value >> 24) & 0xff);
+}
+
+static void host_lang_sync_write_i16(uint8_t *data, uint8_t offset, int16_t value) {
+  data[offset] = (uint8_t)(value & 0xff);
+  data[offset + 1] = (uint8_t)(((uint16_t)value >> 8) & 0xff);
+}
+
+static void host_lang_sync_write_telemetry(uint8_t *response) {
+  uint32_t current_layer_state = (uint32_t)layer_state;
+
+  response[8] = lang_should_be;
+  response[9] = lang_current;
+  response[10] = get_highest_layer(layer_state);
+  host_lang_sync_write_u32(response, 11, current_layer_state);
+  response[15] = lighting_idle_sleeping ? 1 : 0;
+  response[16] = rgb_matrix_is_enabled() ? 1 : 0;
+  response[17] = mouse_pixel_move_telemetry_directions();
+  response[18] = mouse_pixel_move_telemetry_flags();
+  host_lang_sync_write_i16(response, 19, mouse_pixel_move_telemetry_velocity_x());
+  host_lang_sync_write_i16(response, 21, mouse_pixel_move_telemetry_velocity_y());
+  response[23] = shift_should_be;
+  response[24] = shift_current;
+  response[25] = lang_pressed_count;
+  response[26] = shift_pressed_count;
+  response[27] = combo_stack_size;
+  response[28] = mouse_pixel_move_telemetry_scale();
+  response[29] = 1;
+  response[30] = lang_shift_pressed_count;
+}
+
 static void host_lang_sync_send_response(uint8_t command, uint8_t layout, uint8_t status) {
   uint8_t response[HOST_LANG_SYNC_PACKET_SIZE] = {0};
   response[0] = 'M';
@@ -772,8 +808,7 @@ static void host_lang_sync_send_response(uint8_t command, uint8_t layout, uint8_
   response[5] = command;
   response[6] = layout;
   response[7] = status;
-  response[8] = lang_should_be;
-  response[9] = lang_current;
+  host_lang_sync_write_telemetry(response);
   raw_hid_send(response, sizeof(response));
 }
 
@@ -787,6 +822,9 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
       enum LangHostSyncResult result = lang_activate_from_host(data[6]);
       host_lang_sync_send_response(data[5], data[6], host_lang_sync_status_for_result(result));
     } break;
+    case HOST_LANG_SYNC_GET_STATUS:
+      host_lang_sync_send_response(data[5], data[6], HOST_LANG_SYNC_ACCEPTED);
+      break;
     default:
       host_lang_sync_send_response(data[5], data[6], HOST_LANG_SYNC_UNKNOWN_COMMAND);
       break;

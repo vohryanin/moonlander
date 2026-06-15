@@ -312,6 +312,39 @@ void mouse_pixel_move_reset(void) {
   mouse_pixel_move_remainder_y = 0;
 }
 
+uint8_t mouse_pixel_move_telemetry_directions(void) {
+  return mouse_pixel_move_active_directions();
+}
+
+uint8_t mouse_pixel_move_telemetry_flags(void) {
+  uint8_t flags = 0;
+  if (mouse_pixel_move_precision) {
+    flags |= 1;
+  }
+  if (mouse_pixel_move_boost) {
+    flags |= 2;
+  }
+  if (mouse_pixel_move_large_active()) {
+    flags |= 4;
+  }
+  if (mouse_pixel_move_has_velocity()) {
+    flags |= 8;
+  }
+  return flags;
+}
+
+int16_t mouse_pixel_move_telemetry_velocity_x(void) {
+  return mouse_pixel_move_velocity_x;
+}
+
+int16_t mouse_pixel_move_telemetry_velocity_y(void) {
+  return mouse_pixel_move_velocity_y;
+}
+
+uint8_t mouse_pixel_move_telemetry_scale(void) {
+  return MOUSE_PIXEL_MOVE_SCALE;
+}
+
 bool process_mouse_pixel_move(uint16_t keycode, keyrecord_t *record) {
   if (!mouse_pixel_move_is_key(keycode)) {
     return true;

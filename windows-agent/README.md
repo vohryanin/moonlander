@@ -33,7 +33,7 @@ windows-agent\KeyboardLayoutSyncAgent\bin\KeyboardLayoutSyncAgent.exe
 
 Запустить `KeyboardLayoutSyncAgent.exe`. В трее появится иконка `Keyboard layout sync`.
 
-Двойной клик по иконке делает принудительную синхронизацию. В меню иконки есть `Sync now`, `Grid mode (Ctrl+Alt+G)`, `Diagnostics`, `Start with Windows` и `Exit`.
+Двойной клик по иконке делает принудительную синхронизацию. В меню иконки есть `Sync now`, `Refresh telemetry`, `Grid mode (Ctrl+Alt+G)`, `Diagnostics`, `Start with Windows` и `Exit`.
 
 `Grid mode` открывает полноэкранную сетку для быстрого позиционирования курсора:
 
@@ -59,7 +59,10 @@ windows-agent\KeyboardLayoutSyncAgent\bin\KeyboardLayoutSyncAgent.exe
 - включена ли idle-пауза
 - сколько Raw HID устройств найдено
 - последний ACK-результат
+- telemetry из прошивки: внутренний язык, активный слой, состояние idle-подсветки, RGB, mouse-mode, счетчики зажатых клавиш
 - последние строки лога
+
+`Refresh telemetry` вручную запрашивает свежий снимок состояния прошивки. Агент не делает такой запрос по таймеру, чтобы не мешать Windows idle, скринсэйверу и отключению экрана.
 
 Лог пишется сюда:
 
