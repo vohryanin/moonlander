@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -244,26 +245,28 @@ namespace KeyboardLayoutSyncAgent
         private void SetIcon(AgentStatusKind status, KeyboardLayoutKind? layout)
         {
             string text = layout.HasValue ? LayoutName(layout.Value) : "--";
-            Color color;
+            Color background;
+            Color foreground = Color.White;
 
             switch (status)
             {
                 case AgentStatusKind.Synced:
-                    color = Color.FromArgb(32, 148, 83);
+                    background = Color.FromArgb(20, 126, 72);
                     break;
                 case AgentStatusKind.TemporaryIgnored:
-                    color = Color.FromArgb(79, 126, 201);
+                    background = Color.FromArgb(45, 100, 190);
                     break;
                 case AgentStatusKind.Error:
-                    color = Color.FromArgb(196, 57, 57);
+                    background = Color.FromArgb(180, 40, 40);
                     break;
                 default:
-                    color = Color.FromArgb(190, 139, 28);
+                    background = Color.FromArgb(245, 178, 32);
+                    foreground = Color.FromArgb(24, 24, 24);
                     break;
             }
 
             Icon oldIcon = currentIcon;
-            currentIcon = TrayIconFactory.CreateTextIcon(text, color);
+            currentIcon = TrayIconFactory.CreateTextIcon(text, background, foreground);
             notifyIcon.Icon = currentIcon;
             if (oldIcon != null)
             {
@@ -331,6 +334,11 @@ namespace KeyboardLayoutSyncAgent
 
         private void RefreshTelemetry()
         {
+            RefreshTelemetry(true, "manual telemetry");
+        }
+
+        private void RefreshTelemetry(bool writeLog, string actionPrefix)
+        {
             RawHidSendSummary summary = RawHidSender.RequestTelemetry();
             SetLastSummary(summary);
 
@@ -343,22 +351,22 @@ namespace KeyboardLayoutSyncAgent
             if (summary.Accepted > 0)
             {
                 SetStatus(AgentStatusKind.Synced, layout, "Keyboard telemetry: accepted");
-                SetLastAction("manual telemetry: accepted (" + summary.ToCompactString() + ")", true);
+                SetLastAction(actionPrefix + ": accepted (" + summary.ToCompactString() + ")", writeLog);
             }
             else if (summary.NoAck > 0)
             {
                 SetStatus(AgentStatusKind.Warning, layout, "Keyboard telemetry: sent, no ack");
-                SetLastAction("manual telemetry: sent, no ack (" + summary.ToCompactString() + ")", true);
+                SetLastAction(actionPrefix + ": sent, no ack (" + summary.ToCompactString() + ")", writeLog);
             }
             else if (summary.DeviceCount > 0)
             {
                 SetStatus(AgentStatusKind.Error, layout, "Keyboard telemetry: Raw HID write failed");
-                SetLastAction("manual telemetry: write failed (" + summary.ToCompactString() + ")", true);
+                SetLastAction(actionPrefix + ": write failed (" + summary.ToCompactString() + ")", writeLog);
             }
             else
             {
                 SetStatus(AgentStatusKind.Error, layout, "Keyboard telemetry: Moonlander Raw HID not found");
-                SetLastAction("manual telemetry: Raw HID not found", true);
+                SetLastAction(actionPrefix + ": Raw HID not found", writeLog);
             }
         }
 
@@ -404,10 +412,17 @@ namespace KeyboardLayoutSyncAgent
                 return;
             }
 
-            diagnosticsForm = new DiagnosticsForm(delegate { return GetDiagnosticsSnapshot(); });
+            diagnosticsForm = new DiagnosticsForm(
+                delegate { return GetDiagnosticsSnapshot(); },
+                delegate { RefreshDiagnosticsTelemetry(); });
             diagnosticsForm.FormClosed += delegate { diagnosticsForm = null; };
             diagnosticsForm.Show();
             SetLastAction("diagnostics opened", true);
+        }
+
+        private void RefreshDiagnosticsTelemetry()
+        {
+            RefreshTelemetry(false, "diagnostics telemetry");
         }
     }
 
@@ -461,18 +476,79 @@ namespace KeyboardLayoutSyncAgent
 
     internal sealed class DiagnosticsForm : Form
     {
+        private const int WindowWidth = 760;
+        private const int WindowHeight = 560;
+        private const int ToolbarHeight = 36;
+        private const int TextRefreshIntervalMs = 1000;
+        private const int LiveTelemetryIntervalMs = 1000;
+        private const string LiveTelemetryHint = "1s polling, only while this window is open";
+
         private readonly Func<AgentDiagnostics> snapshotProvider;
+        private readonly Action telemetryRefreshAction;
         private readonly TextBox textBox;
         private readonly System.Windows.Forms.Timer refreshTimer;
+        private readonly System.Windows.Forms.Timer liveTelemetryTimer;
+        private readonly CheckBox liveTelemetryCheckBox;
 
-        public DiagnosticsForm(Func<AgentDiagnostics> snapshotProvider)
+        public DiagnosticsForm(Func<AgentDiagnostics> snapshotProvider, Action telemetryRefreshAction)
         {
             this.snapshotProvider = snapshotProvider;
+            this.telemetryRefreshAction = telemetryRefreshAction;
 
             Text = "Keyboard Layout Sync Diagnostics";
-            Width = 760;
-            Height = 560;
+            Width = WindowWidth;
+            Height = WindowHeight;
             StartPosition = FormStartPosition.CenterScreen;
+
+            var layout = new TableLayoutPanel();
+            layout.Dock = DockStyle.Fill;
+            layout.ColumnCount = 1;
+            layout.RowCount = 2;
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, ToolbarHeight));
+            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            Controls.Add(layout);
+
+            var toolbar = new FlowLayoutPanel();
+            toolbar.Dock = DockStyle.Fill;
+            toolbar.FlowDirection = FlowDirection.LeftToRight;
+            toolbar.WrapContents = false;
+            toolbar.Padding = new Padding(6, 5, 6, 4);
+            layout.Controls.Add(toolbar, 0, 0);
+
+            var refreshTelemetryButton = new Button();
+            refreshTelemetryButton.Text = "Refresh now";
+            refreshTelemetryButton.AutoSize = true;
+            refreshTelemetryButton.Margin = new Padding(0, 0, 12, 0);
+            refreshTelemetryButton.Click += delegate { RefreshTelemetryOnce(); };
+            toolbar.Controls.Add(refreshTelemetryButton);
+
+            liveTelemetryCheckBox = new CheckBox();
+            liveTelemetryCheckBox.Text = "Live telemetry";
+            liveTelemetryCheckBox.AutoSize = true;
+            liveTelemetryCheckBox.Margin = new Padding(0, 5, 12, 0);
+            liveTelemetryCheckBox.CheckedChanged += delegate { SetLiveTelemetry(liveTelemetryCheckBox.Checked); };
+            toolbar.Controls.Add(liveTelemetryCheckBox);
+
+            var copyButton = new Button();
+            copyButton.Text = "Copy";
+            copyButton.AutoSize = true;
+            copyButton.Margin = new Padding(0, 0, 12, 0);
+            copyButton.Click += delegate { CopyDiagnostics(); };
+            toolbar.Controls.Add(copyButton);
+
+            var openLogFolderButton = new Button();
+            openLogFolderButton.Text = "Open log folder";
+            openLogFolderButton.AutoSize = true;
+            openLogFolderButton.Margin = new Padding(0, 0, 12, 0);
+            openLogFolderButton.Click += delegate { OpenLogFolder(); };
+            toolbar.Controls.Add(openLogFolderButton);
+
+            var hintLabel = new Label();
+            hintLabel.Text = LiveTelemetryHint;
+            hintLabel.AutoSize = true;
+            hintLabel.Margin = new Padding(0, 7, 0, 0);
+            toolbar.Controls.Add(hintLabel);
 
             textBox = new TextBox();
             textBox.Dock = DockStyle.Fill;
@@ -481,12 +557,16 @@ namespace KeyboardLayoutSyncAgent
             textBox.ScrollBars = ScrollBars.Both;
             textBox.WordWrap = false;
             textBox.Font = new Font(FontFamily.GenericMonospace, 9, FontStyle.Regular, GraphicsUnit.Point);
-            Controls.Add(textBox);
+            layout.Controls.Add(textBox, 0, 1);
 
             refreshTimer = new System.Windows.Forms.Timer();
-            refreshTimer.Interval = 1000;
+            refreshTimer.Interval = TextRefreshIntervalMs;
             refreshTimer.Tick += delegate { RefreshText(); };
             refreshTimer.Start();
+
+            liveTelemetryTimer = new System.Windows.Forms.Timer();
+            liveTelemetryTimer.Interval = LiveTelemetryIntervalMs;
+            liveTelemetryTimer.Tick += delegate { RefreshTelemetryOnce(); };
 
             RefreshText();
         }
@@ -495,11 +575,77 @@ namespace KeyboardLayoutSyncAgent
         {
             if (disposing)
             {
+                liveTelemetryTimer.Stop();
                 refreshTimer.Dispose();
+                liveTelemetryTimer.Dispose();
                 textBox.Dispose();
             }
 
             base.Dispose(disposing);
+        }
+
+        private void SetLiveTelemetry(bool enabled)
+        {
+            if (enabled)
+            {
+                RefreshTelemetryOnce();
+                liveTelemetryTimer.Start();
+                return;
+            }
+
+            liveTelemetryTimer.Stop();
+            RefreshText();
+        }
+
+        private void RefreshTelemetryOnce()
+        {
+            if (telemetryRefreshAction != null)
+            {
+                telemetryRefreshAction();
+            }
+
+            RefreshText();
+        }
+
+        private void CopyDiagnostics()
+        {
+            RefreshText();
+            Clipboard.SetText(textBox.Text);
+        }
+
+        private void OpenLogFolder()
+        {
+            string logPath = AgentLog.LogPath;
+            string directory = Path.GetDirectoryName(logPath);
+            if (string.IsNullOrEmpty(directory))
+            {
+                return;
+            }
+
+            try
+            {
+                if (File.Exists(logPath))
+                {
+                    Process.Start("explorer.exe", "/select,\"" + logPath + "\"");
+                    return;
+                }
+
+                if (!Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                Process.Start("explorer.exe", "\"" + directory + "\"");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    this,
+                    "Could not open log folder." + Environment.NewLine + ex.Message,
+                    "Keyboard Layout Sync Diagnostics",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+            }
         }
 
         private void RefreshText()
@@ -1058,24 +1204,40 @@ namespace KeyboardLayoutSyncAgent
 
     internal static class TrayIconFactory
     {
-        public static Icon CreateTextIcon(string text, Color background)
+        private const int IconSize = 32;
+        private const int IconMax = IconSize - 1;
+        private const int TextFontSize = 21;
+        private const int TextPaddingX = 2;
+        private const int TextPaddingY = 2;
+        private static readonly TextFormatFlags IconTextFlags =
+            TextFormatFlags.HorizontalCenter |
+            TextFormatFlags.VerticalCenter |
+            TextFormatFlags.NoPadding |
+            TextFormatFlags.SingleLine;
+        private static readonly string[] FontNames = { "Arial", "Segoe UI", "Tahoma" };
+
+        public static Icon CreateTextIcon(string text, Color background, Color foreground)
         {
-            using (var bitmap = new Bitmap(16, 16))
+            Rectangle textBounds = new Rectangle(
+                TextPaddingX,
+                TextPaddingY,
+                IconSize - TextPaddingX * 2,
+                IconSize - TextPaddingY * 2);
+
+            using (var bitmap = new Bitmap(IconSize, IconSize))
             using (Graphics graphics = Graphics.FromImage(bitmap))
             using (var brush = new SolidBrush(background))
-            using (var pen = new Pen(Color.White))
-            using (var font = new Font(FontFamily.GenericSansSerif, 6, FontStyle.Bold, GraphicsUnit.Pixel))
+            using (var font = CreateIconFont())
             {
                 graphics.Clear(Color.Transparent);
-                graphics.FillRectangle(brush, 0, 0, 15, 15);
-                graphics.DrawRectangle(pen, 0, 0, 15, 15);
+                graphics.FillRectangle(brush, 0, 0, IconMax, IconMax);
                 TextRenderer.DrawText(
                     graphics,
                     text,
                     font,
-                    new Rectangle(0, 1, 16, 14),
-                    Color.White,
-                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+                    textBounds,
+                    foreground,
+                    IconTextFlags);
 
                 IntPtr iconHandle = bitmap.GetHicon();
                 try
@@ -1087,6 +1249,22 @@ namespace KeyboardLayoutSyncAgent
                     DestroyIcon(iconHandle);
                 }
             }
+        }
+
+        private static Font CreateIconFont()
+        {
+            foreach (string fontName in FontNames)
+            {
+                try
+                {
+                    return new Font(fontName, TextFontSize, FontStyle.Bold, GraphicsUnit.Pixel);
+                }
+                catch
+                {
+                }
+            }
+
+            return new Font(FontFamily.GenericSansSerif, TextFontSize, FontStyle.Bold, GraphicsUnit.Pixel);
         }
 
         [DllImport("user32.dll", SetLastError = true)]
