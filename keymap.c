@@ -643,6 +643,10 @@ static void lighting_idle_user_timer(void) {
 }
 
 layer_state_t layer_state_set_user(layer_state_t state) {
+  if ((state & ((layer_state_t)1 << LAYER_GREEN)) == 0) {
+    mouse_pixel_move_reset();
+  }
+
   if (initted_for_layer_state) {
     // Выключаем все леды, потому что они только просвечивают своим некрасивым цветом через прозрачные кейкапы, а для чего их использовать можно я не придумал
     moonlander_leds_set_all(false);

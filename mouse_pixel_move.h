@@ -301,6 +301,17 @@ static void mouse_pixel_move_release_fast(uint16_t keycode) {
   mouse_pixel_move_fast_directions &= (uint8_t)~(1 << mouse_pixel_move_direction(keycode));
 }
 
+void mouse_pixel_move_reset(void) {
+  mouse_pixel_move_fast_directions = 0;
+  mouse_pixel_move_large_directions = 0;
+  mouse_pixel_move_precision = false;
+  mouse_pixel_move_boost = false;
+  mouse_pixel_move_velocity_x = 0;
+  mouse_pixel_move_velocity_y = 0;
+  mouse_pixel_move_remainder_x = 0;
+  mouse_pixel_move_remainder_y = 0;
+}
+
 bool process_mouse_pixel_move(uint16_t keycode, keyrecord_t *record) {
   if (!mouse_pixel_move_is_key(keycode)) {
     return true;
