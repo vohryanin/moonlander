@@ -1,5 +1,5 @@
 typedef struct Combo {
-  ComboKey array[COMBO_MAX_SIZE];
+  ComboMask mask;
   uint8_t size;
   uint8_t state;
   uint32_t last_modify_time;
@@ -15,11 +15,13 @@ enum ComboState {
 // #define COMBO_DEBUG
 
 #ifdef COMBO_DEBUG
-  #define TRANSITION_DEBUG(a) uprintf("transition '" #a "' now it is #%d: {", (int)(combo - &combo_stack[0])); \
-    for (int i = 0; i < combo->size; ++i) { \
-      uprintf("%d, ", combo->array[i].repr); \
-    } \
-    uprintf("} in %d\n", combo->state);
+  #define TRANSITION_DEBUG(a) uprintf( \
+    "transition '" #a "' now it is #%d: mask=%lu/%lu size=%d state=%d\n", \
+    (int)(combo - &combo_stack[0]), \
+    (unsigned long)combo->mask.high, \
+    (unsigned long)combo->mask.low, \
+    combo->size, \
+    combo->state)
 #else
   #define TRANSITION_DEBUG(a) ;
 #endif
@@ -45,14 +47,66 @@ ComboKey combo_key_to_combo_key(uint16_t key) {
   }
 }
 
-bool combo_has_key(Combo *combo, ComboKey key) {
-  for (uint8_t i = 0; i < combo->size; ++i) {
-    if (eq_combo_key(combo->array[i], key)) {
-      return true;
-    }
+static ComboMask combo_empty_mask(void) {
+  ComboMask mask = {0, 0};
+  return mask;
+}
+
+static ComboMask combo_key_mask(ComboKey key) {
+  ComboMask mask = combo_empty_mask();
+  if (eq_combo_key(key, NONE_COMBO_KEY)) {
+    return mask;
   }
 
-  return false;
+  if (key.repr < 32) {
+    mask.low = (uint32_t)1UL << key.repr;
+  } else {
+    mask.high = (uint32_t)1UL << (key.repr - 32);
+  }
+
+  return mask;
+}
+
+static ComboMask combo_mask_add_key(ComboMask mask, ComboKey key) {
+  ComboMask bit = combo_key_mask(key);
+  mask.low |= bit.low;
+  mask.high |= bit.high;
+  return mask;
+}
+
+static ComboMask combo_mask_remove_key(ComboMask mask, ComboKey key) {
+  ComboMask bit = combo_key_mask(key);
+  mask.low &= ~bit.low;
+  mask.high &= ~bit.high;
+  return mask;
+}
+
+static bool combo_mask_eq(ComboMask a, ComboMask b) {
+  return a.low == b.low && a.high == b.high;
+}
+
+static bool combo_mask_contains(ComboMask mask, ComboMask required) {
+  return (mask.low & required.low) == required.low &&
+    (mask.high & required.high) == required.high;
+}
+
+static bool combo_mask_has_key(ComboMask mask, ComboKey key) {
+  return combo_mask_contains(mask, combo_key_mask(key));
+}
+
+static ComboMask combo_get_mask(ComboPos pos) {
+  if (!combo_pos_is_valid(pos)) {
+    return combo_empty_mask();
+  }
+
+  ComboMask mask;
+  mask.low = pgm_read_dword(&(combos[pos.repr].mask.low));
+  mask.high = pgm_read_dword(&(combos[pos.repr].mask.high));
+  return mask;
+}
+
+bool combo_has_key(Combo *combo, ComboKey key) {
+  return combo_mask_has_key(combo->mask, key);
 }
 
 uint8_t combo_get_len(ComboPos elem_index) {
@@ -60,49 +114,29 @@ uint8_t combo_get_len(ComboPos elem_index) {
     return 0;
   }
 
-  for (uint8_t i = 0; i < COMBO_MAX_SIZE + 1; ++i) {
-    if (eq_combo_key(COMBO_KEY(pgm_read_byte(&(combos[elem_index.repr].to_press[i]))), NONE_COMBO_KEY)) {
-      return i;
-    }
-  }
-  return 0;
-}
-
-bool combo_elem_has_key(ComboPos elem_index, ComboKey key) {
-  uint8_t len = combo_get_len(elem_index);
-  for (uint8_t i = 0; i < len; ++i) {
-    if (eq_combo_key(COMBO_KEY(pgm_read_byte(&(combos[elem_index.repr].to_press[i]))), key)) {
-      return true;
-    }
-  }
-
-  return false;
+  return pgm_read_byte(&(combos[elem_index.repr].size));
 }
 
 ComboPos combo_get_pos(Combo *combo) {
   for (uint8_t i = 0; i < combos_size; ++i) {
-    if (combo_get_len(COMBO_POS(i)) == combo->size) {
-      bool found = true;
-      for (uint8_t j = 0; j < combo->size; ++j) {
-        found &= combo_has_key(combo, COMBO_KEY(pgm_read_byte(&(combos[i].to_press[j]))));
-      }
-      if (found) {
-        return COMBO_POS(i);
-      }
+    ComboPos pos = COMBO_POS(i);
+    if (combo_get_len(pos) == combo->size && combo_mask_eq(combo_get_mask(pos), combo->mask)) {
+      return pos;
     }
   }
   return NONE_COMBO_POS;
 }
 
 bool combo_has_prefix(Combo *combo, ComboKey another_key) {
+  ComboMask required = combo_mask_add_key(combo->mask, another_key);
+  if (combo_mask_eq(required, combo->mask)) {
+    return false;
+  }
+
   for (uint8_t i = 0; i < combos_size; ++i) {
     ComboPos pos = COMBO_POS(i);
     if (combo_get_len(pos) > combo->size) {
-      bool found = combo_elem_has_key(pos, another_key);
-      for (uint8_t j = 0; j < combo->size; ++j) {
-        found &= combo_elem_has_key(pos, combo->array[j]);
-      }
-      if (found) {
+      if (combo_mask_contains(combo_get_mask(pos), required)) {
         return true;
       }
     }
@@ -210,23 +244,12 @@ void combo_onenter_end(Combo *combo) {
 }
 
 bool combo_onenter_3(Combo *combo, ComboKey key) {
-  uint8_t pos = combo->size;
-  for (uint8_t i = 0; i < combo->size; ++i) {
-    if (eq_combo_key(combo->array[i], key)) {
-      pos = i;
-    }
-  }
-
-  if (pos == combo->size) {
+  if (!combo_has_key(combo, key)) {
     return false;
   }
 
   combo->size--;
-
-  for (uint8_t i = pos; i < combo->size; ++i) {
-    combo->array[i] = combo->array[i+1];
-  }
-
+  combo->mask = combo_mask_remove_key(combo->mask, key);
   combo->state = COMBO_STATE_RELEASE_ONLY;
 
   if (combo->size == 0) {
@@ -247,7 +270,7 @@ bool combo_process_1(Combo *combo, uint16_t key, keyrecord_t *record) {
       if (combo->size == COMBO_MAX_SIZE) {
         combo_max_size_error();
       } else {
-        combo->array[combo->size] = key_combo;
+        combo->mask = combo_mask_add_key(combo->mask, key_combo);
         combo->size++;
         combo->last_modify_time = timer_read();
         TRANSITION_DEBUG(e);
@@ -416,7 +439,7 @@ bool combo_process_record(uint16_t key, keyrecord_t *record) {
     } else {
       Combo* combo = &combo_stack[combo_stack_size];
       combo_stack_size++;
-      combo->array[0] = key_combo;
+      combo->mask = combo_key_mask(key_combo);
       combo->size = 1;
       combo->state = COMBO_STATE_COLLECTING;
       combo->last_modify_time = timer_read();

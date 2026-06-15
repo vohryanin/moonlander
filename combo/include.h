@@ -16,10 +16,32 @@ enum combo_keycodes {
   #define CUSTOM_SAFE_RANGE COMBO_NEW_SAFE_RANGE
 };
 
+#if COMBO_KEYS_COUNT > 64
+  #error "Combo bitmask supports up to 64 combo keys."
+#endif
+
+#if COMBO_MAX_SIZE > 4
+  #error "COMBO_COUNT supports up to 4-key chords."
+#endif
+
+typedef struct ComboMask {
+  uint32_t low;
+  uint32_t high;
+} ComboMask;
+
+#define COMBO_KEY_INDEX(x) ((x) - CMB_000)
+#define COMBO_MASK_LOW_BIT(x) (COMBO_KEY_INDEX(x) < 32 ? ((uint32_t)1UL << (COMBO_KEY_INDEX(x) & 31)) : 0UL)
+#define COMBO_MASK_HIGH_BIT(x) (COMBO_KEY_INDEX(x) >= 32 ? ((uint32_t)1UL << (COMBO_KEY_INDEX(x) & 31)) : 0UL)
+#define COMBO_MASK_LOW_PART(x) COMBO_MASK_LOW_BIT(x) |
+#define COMBO_MASK_HIGH_PART(x) COMBO_MASK_HIGH_BIT(x) |
+#define COMBO_MASK_INIT(...) { MAP(COMBO_MASK_LOW_PART, __VA_ARGS__) 0UL, MAP(COMBO_MASK_HIGH_PART, __VA_ARGS__) 0UL }
+
+#define COMBO_COUNT_IMPL(_1, _2, _3, _4, N, ...) N
+#define COMBO_COUNT(...) COMBO_COUNT_IMPL(__VA_ARGS__, 4, 3, 2, 1, 0)
+
 // С помощью этого макроса задаётся аккорд
-#define CHORD(KEYCODE, ...) { .to_press = { MAP(COMBO_WITH_SEP, __VA_ARGS__) NONE_COMBO_KEY }, .keycode = KEYCODE, .undo_keycode = 0 }
-#define IMMEDIATE_CHORD(KEYCODE, UNDO, ...) { .to_press = { MAP(COMBO_WITH_SEP, __VA_ARGS__) NONE_COMBO_KEY }, .keycode = KEYCODE, .undo_keycode = UNDO }
-#define COMBO_WITH_SEP(x) COMBO_KEY(x - CMB_000), 
+#define CHORD(KEYCODE, ...) { .mask = COMBO_MASK_INIT(__VA_ARGS__), .size = COMBO_COUNT(__VA_ARGS__), .keycode = KEYCODE, .undo_keycode = 0 }
+#define IMMEDIATE_CHORD(KEYCODE, UNDO, ...) { .mask = COMBO_MASK_INIT(__VA_ARGS__), .size = COMBO_COUNT(__VA_ARGS__), .keycode = KEYCODE, .undo_keycode = UNDO }
 
 // Uncomment this line if you want to print debug this extension
 // #define COMBO_DEBUG
@@ -51,7 +73,8 @@ NEWTYPE(ComboPos, combo_pos, uint8_t, 255, NONE_COMBO_POS)
 #define COMBO_POS(x) ((ComboPos){ .repr = (x) })
 
 typedef struct ComboWithKeycode {
-  ComboKey to_press[COMBO_MAX_SIZE + 1];
+  ComboMask mask;
+  uint8_t size;
   uint16_t keycode;
   uint16_t undo_keycode;
 } ComboWithKeycode;
