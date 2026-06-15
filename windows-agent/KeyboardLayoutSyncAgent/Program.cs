@@ -59,6 +59,7 @@ namespace KeyboardLayoutSyncAgent
     internal sealed class TrayAppContext : ApplicationContext
     {
         private const int ForceResendIntervalMs = 1500;
+        private const uint IdleRawHidPauseMs = 5000;
 
         private readonly NotifyIcon notifyIcon;
         private readonly System.Windows.Forms.Timer timer;
@@ -66,6 +67,7 @@ namespace KeyboardLayoutSyncAgent
         private readonly HotKeyWindow gridHotKeyWindow;
         private Icon currentIcon;
         private GridOverlayForm gridOverlayForm;
+        private bool pausedForIdle;
         private KeyboardLayoutKind? lastSentLayout;
         private DateTime lastSentAt = DateTime.MinValue;
 
@@ -132,6 +134,18 @@ namespace KeyboardLayoutSyncAgent
 
         private void SyncNow(bool force)
         {
+            if (!force && WindowsIdle.IsIdleFor(IdleRawHidPauseMs))
+            {
+                if (!pausedForIdle)
+                {
+                    pausedForIdle = true;
+                    SetStatus(AgentStatusKind.Warning, lastSentLayout, "Keyboard layout sync: paused while Windows is idle");
+                }
+                return;
+            }
+
+            pausedForIdle = false;
+
             KeyboardLayoutKind layout;
             if (!WindowsLayout.TryGetForegroundLayout(out layout))
             {
@@ -711,6 +725,44 @@ namespace KeyboardLayoutSyncAgent
 
         [DllImport("user32.dll")]
         private static extern IntPtr GetKeyboardLayout(uint idThread);
+    }
+
+    internal static class WindowsIdle
+    {
+        public static bool IsIdleFor(uint milliseconds)
+        {
+            uint idleMilliseconds;
+            return TryGetIdleMilliseconds(out idleMilliseconds) &&
+                idleMilliseconds >= milliseconds;
+        }
+
+        private static bool TryGetIdleMilliseconds(out uint idleMilliseconds)
+        {
+            LastInputInfo info = new LastInputInfo();
+            info.cbSize = (uint)Marshal.SizeOf(typeof(LastInputInfo));
+
+            if (!GetLastInputInfo(ref info))
+            {
+                idleMilliseconds = 0;
+                return false;
+            }
+
+            idleMilliseconds = GetTickCount() - info.dwTime;
+            return true;
+        }
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool GetLastInputInfo(ref LastInputInfo plii);
+
+        [DllImport("kernel32.dll")]
+        private static extern uint GetTickCount();
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct LastInputInfo
+        {
+            public uint cbSize;
+            public uint dwTime;
+        }
     }
 
     internal sealed class RawHidSendSummary
