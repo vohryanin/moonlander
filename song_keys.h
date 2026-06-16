@@ -30,17 +30,34 @@ float my_song3[][2] = SONG(AG_SWAP_SOUND);
 float my_song4[][2] = SONG(VIOLIN_SOUND);
 float my_song5[][2] = SONG(GUITAR_SOUND);
 float my_song6[][2] = SONG(CHROMATIC_SOUND);
+float lang_en_song[][2] = {
+  {659.25f, 8},
+  {0.0f, 1},
+  {783.99f, 10},
+};
+float lang_ru_song[][2] = {
+  {523.25f, 8},
+  {0.0f, 1},
+  {392.00f, 10},
+};
 
 static bool music_keycode_disabled = false;
+
+#define LANG_SWITCH_AUDIO_CLASSIC 0
+#define LANG_SWITCH_AUDIO_SPLIT 1
 
 #ifndef LANG_SWITCH_AUDIO_COOLDOWN
   #define LANG_SWITCH_AUDIO_COOLDOWN 120
 #endif
 
+#ifndef LANG_SWITCH_AUDIO_MODE
+  #define LANG_SWITCH_AUDIO_MODE LANG_SWITCH_AUDIO_SPLIT
+#endif
+
 static uint32_t lang_switch_audio_timer = 0;
 static bool lang_switch_audio_timer_started = false;
 
-static void play_lang_switch_audio(void) {
+static void play_lang_switch_audio(uint8_t lang) {
   if (lang_switch_audio_timer_started && LANG_SWITCH_AUDIO_COOLDOWN > 0) {
     if (timer_elapsed32(lang_switch_audio_timer) < LANG_SWITCH_AUDIO_COOLDOWN) {
       return;
@@ -49,7 +66,16 @@ static void play_lang_switch_audio(void) {
 
   lang_switch_audio_timer = timer_read32();
   lang_switch_audio_timer_started = true;
+
+#if LANG_SWITCH_AUDIO_MODE == LANG_SWITCH_AUDIO_CLASSIC
   PLAY_SONG(my_song1);
+#else
+  if (lang == LANG_ID_RU) {
+    PLAY_SONG(lang_ru_song);
+  } else {
+    PLAY_SONG(lang_en_song);
+  }
+#endif
 }
 
 static void music_press_arbitrary_keycode(uint16_t keycode, bool down) {
@@ -79,7 +105,7 @@ bool process_my_music_keys(uint16_t keycode, keyrecord_t *record) {
     case FROM: \
       music_press_arbitrary_keycode(TO, record->event.pressed); \
       if (record->event.pressed) { \
-        play_lang_switch_audio(); \
+        play_lang_switch_audio(lang_should_be); \
       } \
       return false;
 
