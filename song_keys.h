@@ -33,6 +33,25 @@ float my_song6[][2] = SONG(CHROMATIC_SOUND);
 
 static bool music_keycode_disabled = false;
 
+#ifndef LANG_SWITCH_AUDIO_COOLDOWN
+  #define LANG_SWITCH_AUDIO_COOLDOWN 120
+#endif
+
+static uint32_t lang_switch_audio_timer = 0;
+static bool lang_switch_audio_timer_started = false;
+
+static void play_lang_switch_audio(void) {
+  if (lang_switch_audio_timer_started && LANG_SWITCH_AUDIO_COOLDOWN > 0) {
+    if (timer_elapsed32(lang_switch_audio_timer) < LANG_SWITCH_AUDIO_COOLDOWN) {
+      return;
+    }
+  }
+
+  lang_switch_audio_timer = timer_read32();
+  lang_switch_audio_timer_started = true;
+  PLAY_SONG(my_song1);
+}
+
 static void music_press_arbitrary_keycode(uint16_t keycode, bool down) {
   music_keycode_disabled = true;
   press_arbitrary_keycode(keycode, down);
@@ -56,10 +75,18 @@ bool process_my_music_keys(uint16_t keycode, keyrecord_t *record) {
       music_press_arbitrary_keycode(TO, record->event.pressed); \
       return false;
 
+  #define MUSIC_KEYCODE_LANG(FROM, TO) \
+    case FROM: \
+      music_press_arbitrary_keycode(TO, record->event.pressed); \
+      if (record->event.pressed) { \
+        play_lang_switch_audio(); \
+      } \
+      return false;
+
   switch (keycode) {
-    MUSIC_KEYCODE(MU_LANG, LA_CHNG, my_song1)
-    MUSIC_KEYCODE(MU_LAEN, LA_EN, my_song1)
-    MUSIC_KEYCODE(MU_LARU, LA_RU, my_song1)
+    MUSIC_KEYCODE_LANG(MU_LANG, LA_CHNG)
+    MUSIC_KEYCODE_LANG(MU_LAEN, LA_EN)
+    MUSIC_KEYCODE_LANG(MU_LARU, LA_RU)
     MUSIC_KEYCODE(MU_LAN1, LA_CAPS, my_song2)
     MUSIC_KEYCODE(MU_LAN2, LA_ALSH, my_song4)
     MUSIC_KEYCODE(MU_LAN3, LA_CTSH, my_song5)
@@ -76,6 +103,7 @@ bool process_my_music_keys(uint16_t keycode, keyrecord_t *record) {
     MUSIC_KEYCODE(TG(LAYER_ORANGE), keycode, my_song6)
   }
 
+  #undef MUSIC_KEYCODE_LANG
   #undef MUSIC_KEYCODE
 
   return true;

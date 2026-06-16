@@ -168,18 +168,23 @@ bool combo_is_immediate(ComboPos elem_index) {
   return combo_get_undo(elem_index) != 0;
 }
 
-void combo_press(ComboPos pos, bool down) {
+static void combo_press_keycode(ComboPos pos, bool down) {
   if (!combo_pos_is_valid(pos)) {
     return;
   }
 
+  bool was_combo_enabled = combo_enabled;
+  combo_enabled = false;
+  press_arbitrary_keycode(combo_get_keycode(pos), down);
+  combo_enabled = was_combo_enabled;
+}
+
+void combo_press(ComboPos pos, bool down) {
   #ifdef COMBO_DEBUG
   uprintf("combo press pos: %d %s\n", pos.repr, down ? "down" : "up");
   #endif
 
-  combo_enabled = false;
-  press_arbitrary_keycode(combo_get_keycode(pos), down);
-  combo_enabled = true;
+  combo_press_keycode(pos, down);
 }
 
 void combo_press_undo(ComboPos pos) {
@@ -191,9 +196,22 @@ void combo_press_undo(ComboPos pos) {
   uprintf("combo press undo up: %d\n", pos.repr);
   #endif
 
+  bool was_combo_enabled = combo_enabled;
   combo_enabled = false;
   press_arbitrary_keycode(combo_get_undo(pos), false);
-  combo_enabled = true;
+  combo_enabled = was_combo_enabled;
+}
+
+void combo_reset_all(void) {
+  for (uint8_t i = 0; i < combo_stack_size; ++i) {
+    Combo *combo = &combo_stack[i];
+    if (combo->state == COMBO_STATE_PRESSED || combo->state == COMBO_STATE_IMMEDIATE) {
+      combo_press_keycode(combo_get_pos(combo), false);
+    }
+  }
+
+  combo_stack_size = 0;
+  combo_k_enabled = true;
 }
 
 void process_as_usual(keyrecord_t* record) {
@@ -389,6 +407,7 @@ bool combo_process_4(Combo *combo, uint16_t key, keyrecord_t *record) {
   // This is guaranteed to be true
   if (!neq_combo_pos(pos, NONE_COMBO_POS)) {
     combo_max_count_error();
+    return false;
   }
 
   if (neq_combo_key(key_combo, NONE_COMBO_KEY)) {
