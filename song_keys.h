@@ -95,10 +95,18 @@ bool process_my_music_keys(uint16_t keycode, keyrecord_t *record) {
 
   #define MUSIC_KEYCODE(FROM, TO, SONG) \
     case FROM: \
+      music_press_arbitrary_keycode(TO, record->event.pressed); \
       if (record->event.pressed) { \
         PLAY_SONG(SONG); \
       } \
+      return false;
+
+  #define MUSIC_KEYCODE_RELEASE(FROM, TO, SONG) \
+    case FROM: \
       music_press_arbitrary_keycode(TO, record->event.pressed); \
+      if (!record->event.pressed) { \
+        PLAY_SONG(SONG); \
+      } \
       return false;
 
   #define MUSIC_KEYCODE_LANG(FROM, TO) \
@@ -118,8 +126,8 @@ bool process_my_music_keys(uint16_t keycode, keyrecord_t *record) {
     MUSIC_KEYCODE(MU_LAN3, LA_CTSH, my_song5)
     MUSIC_KEYCODE(MU_LAN4, LA_WISP, my_song6)
     MUSIC_KEYCODE(MU_CTJ, CT_J, my_song3)
-    MUSIC_KEYCODE(MU_SCR, KC_PSCR, my_song3)
-    MUSIC_KEYCODE(MU_WNL, WN_L, my_song3)
+    MUSIC_KEYCODE_RELEASE(MU_SCR, KC_PSCR, my_song3)
+    MUSIC_KEYCODE_RELEASE(MU_WNL, WN_L, my_song3)
 
     case TG(LAYER_RED):
     case TG(LAYER_GREEN):
@@ -130,6 +138,7 @@ bool process_my_music_keys(uint16_t keycode, keyrecord_t *record) {
   }
 
   #undef MUSIC_KEYCODE_LANG
+  #undef MUSIC_KEYCODE_RELEASE
   #undef MUSIC_KEYCODE
 
   return true;
