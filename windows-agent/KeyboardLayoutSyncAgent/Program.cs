@@ -714,7 +714,8 @@ namespace KeyboardLayoutSyncAgent
             builder.AppendLine("Pressed counts:  lang=" + telemetry.LangPressedCount +
                 ", shift=" + telemetry.ShiftPressedCount +
                 ", langShift=" + telemetry.LangShiftPressedCount +
-                ", comboStack=" + telemetry.ComboStackSize);
+                ", comboStack=" + telemetry.ComboStackSize +
+                ", comboActive=" + telemetry.ComboActiveKeyCount);
         }
 
         private static string LayoutText(KeyboardLayoutKind? layout)
@@ -1422,6 +1423,7 @@ namespace KeyboardLayoutSyncAgent
         public int ShiftPressedCount;
         public int LangShiftPressedCount;
         public int ComboStackSize;
+        public int ComboActiveKeyCount;
         public int TelemetryVersion;
 
         public KeyboardTelemetry Clone()
@@ -1449,6 +1451,7 @@ namespace KeyboardLayoutSyncAgent
             clone.ShiftPressedCount = ShiftPressedCount;
             clone.LangShiftPressedCount = LangShiftPressedCount;
             clone.ComboStackSize = ComboStackSize;
+            clone.ComboActiveKeyCount = ComboActiveKeyCount;
             clone.TelemetryVersion = TelemetryVersion;
             return clone;
         }
@@ -1886,7 +1889,7 @@ namespace KeyboardLayoutSyncAgent
         private static KeyboardTelemetry ParseTelemetry(byte[] report, int length, int offset)
         {
             KeyboardTelemetry telemetry = new KeyboardTelemetry();
-            if (length < offset + 31)
+            if (length < offset + 32)
             {
                 return telemetry;
             }
@@ -1919,6 +1922,7 @@ namespace KeyboardLayoutSyncAgent
             telemetry.MouseScale = report[offset + 28];
             telemetry.TelemetryVersion = report[offset + 29];
             telemetry.LangShiftPressedCount = report[offset + 30];
+            telemetry.ComboActiveKeyCount = report[offset + 31];
             return telemetry;
         }
 

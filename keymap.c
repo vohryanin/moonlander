@@ -806,6 +806,7 @@ static void host_lang_sync_write_telemetry(uint8_t *response) {
   response[28] = mouse_pixel_move_telemetry_scale();
   response[29] = 1;
   response[30] = lang_shift_pressed_count;
+  response[31] = combo_active_key_count();
 }
 
 static void host_lang_sync_send_response(uint8_t command, uint8_t layout, uint8_t status) {

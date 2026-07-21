@@ -5,6 +5,12 @@ typedef struct Combo {
   uint32_t last_modify_time;
 } Combo;
 
+typedef struct ActiveComboKey {
+  ComboKey key;
+  keypos_t position;
+  bool active;
+} ActiveComboKey;
+
 enum ComboState {
   COMBO_STATE_COLLECTING = 1,
   COMBO_STATE_PRESSED,
@@ -30,6 +36,7 @@ Combo combo_stack[COMBO_STACK_MAX_SIZE] = {};
 uint8_t combo_stack_size = 0;
 bool combo_enabled = true;
 bool combo_k_enabled = true;
+static ActiveComboKey active_combo_keys[COMBO_KEYS_COUNT] = {};
 
 bool combo_pos_is_valid(ComboPos pos) {
   return neq_combo_pos(pos, NONE_COMBO_POS) && pos.repr < combos_size;
@@ -45,6 +52,85 @@ ComboKey combo_key_to_combo_key(uint16_t key) {
   } else {
     return NONE_COMBO_KEY;
   }
+}
+
+static uint16_t combo_key_to_keycode(ComboKey key) {
+  return CMB_000 + key.repr;
+}
+
+static bool combo_key_position_eq(keypos_t a, keypos_t b) {
+  return KEYEQ(a, b);
+}
+
+static void combo_active_remove_position(keypos_t position) {
+  for (uint8_t i = 0; i < COMBO_KEYS_COUNT; ++i) {
+    if (active_combo_keys[i].active && combo_key_position_eq(active_combo_keys[i].position, position)) {
+      active_combo_keys[i].active = false;
+    }
+  }
+}
+
+static void combo_active_add(ComboKey key, keypos_t position) {
+  if (eq_combo_key(key, NONE_COMBO_KEY)) {
+    return;
+  }
+
+  combo_active_remove_position(position);
+
+  for (uint8_t i = 0; i < COMBO_KEYS_COUNT; ++i) {
+    if (!active_combo_keys[i].active) {
+      active_combo_keys[i].key = key;
+      active_combo_keys[i].position = position;
+      active_combo_keys[i].active = true;
+      return;
+    }
+  }
+}
+
+static ComboKey combo_active_take(keypos_t position) {
+  for (uint8_t i = 0; i < COMBO_KEYS_COUNT; ++i) {
+    if (active_combo_keys[i].active && combo_key_position_eq(active_combo_keys[i].position, position)) {
+      ComboKey key = active_combo_keys[i].key;
+      active_combo_keys[i].active = false;
+      return key;
+    }
+  }
+
+  return NONE_COMBO_KEY;
+}
+
+static void combo_active_clear(void) {
+  for (uint8_t i = 0; i < COMBO_KEYS_COUNT; ++i) {
+    active_combo_keys[i].active = false;
+  }
+}
+
+uint8_t combo_active_key_count(void) {
+  uint8_t count = 0;
+  for (uint8_t i = 0; i < COMBO_KEYS_COUNT; ++i) {
+    if (active_combo_keys[i].active) {
+      count++;
+    }
+  }
+  return count;
+}
+
+static ComboKey combo_record_to_combo_key(uint16_t key, keyrecord_t *record) {
+  ComboKey key_combo = combo_key_to_combo_key(key);
+
+  if (record->event.pressed) {
+    if (neq_combo_key(key_combo, NONE_COMBO_KEY)) {
+      combo_active_add(key_combo, record->event.key);
+    }
+    return key_combo;
+  }
+
+  ComboKey active_key = combo_active_take(record->event.key);
+  if (neq_combo_key(active_key, NONE_COMBO_KEY)) {
+    return active_key;
+  }
+
+  return key_combo;
 }
 
 static ComboMask combo_empty_mask(void) {
@@ -212,6 +298,7 @@ void combo_reset_all(void) {
 
   combo_stack_size = 0;
   combo_k_enabled = true;
+  combo_active_clear();
 }
 
 void process_as_usual(keyrecord_t* record) {
@@ -441,14 +528,15 @@ bool combo_process_record(uint16_t key, keyrecord_t *record) {
     return true;
 
   bool down = record->event.pressed;
-  ComboKey key_combo = combo_key_to_combo_key(key);
+  ComboKey key_combo = combo_record_to_combo_key(key, record);
+  uint16_t combo_keycode = neq_combo_key(key_combo, NONE_COMBO_KEY) ? combo_key_to_keycode(key_combo) : key;
   #ifdef COMBO_DEBUG
   uprintf("%d pressed %s\n", key_combo.repr, down ? "down" : "up");
   #endif
 
   for (uint8_t i = 0; i < combo_stack_size; ++i) {
     Combo *combo = &combo_stack[i];
-    if (!combo_process_local_states(combo, key, record))
+    if (!combo_process_local_states(combo, combo_keycode, record))
       return false;
   }
 

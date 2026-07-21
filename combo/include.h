@@ -85,6 +85,7 @@ const uint8_t combos_size;
 bool combo_process_record(uint16_t key, keyrecord_t *record);
 void combo_user_timer(void);
 void combo_reset_all(void);
+uint8_t combo_active_key_count(void);
 void combo_max_count_error(void);
 void combo_max_size_error(void);
 
